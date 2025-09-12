@@ -1,0 +1,69 @@
+{
+  "_policy": {
+    "export": {
+      "naming": {
+        "pattern": "{channel}.{version}.{date}_{time}.json",
+        "defaults": {
+          "channel": "strict",
+          "version": "v{inc}"
+        },
+        "clock": {
+          "tz": "Europe/Istanbul",
+          "format": {
+            "date": "yyyyMMdd",
+            "time": "HHmm"
+          }
+        }
+      },
+      "github": {
+        "user": "mertgs190500",
+        "repo": "json-proje",
+        "branch": "main",
+        "raw_link": "https://raw.githubusercontent.com/{user}/{repo}/{branch}/{filename}"
+      }
+    }
+  },
+  "workflow_patches": {
+    "steps": {
+      "16": {
+        "export_contract": {
+          "emit_artifact": true,
+          "artifact_name_template": "{channel}.{version}.{date}_{time}.json",
+          "display": {
+            "render_full": true,
+            "sections": [
+              {
+                "title": "Oluşturulacak Dosya Adı",
+                "bind": "export.filename"
+              },
+              {
+                "title": "GitHub Raw Link",
+                "bind": "export.raw_link"
+              },
+              {
+                "title": "Yapılacak İşlem",
+                "static": "Dosyayı indir → Desktop/json-proje klasörüne koy → push-json.bat'ı çalıştırın → ardından Onay'a basın."
+              }
+            ]
+          },
+          "constraints": {
+            "must_confirm": true,
+            "require_user_task": true
+          },
+          "outputs": {
+            "export.filename": "{channel}.{version}.{date}_{time}.json",
+            "export.raw_link": "https://raw.githubusercontent.com/mertgs190500/json-proje/main/{channel}.{version}.{date}_{time}.json"
+          }
+        },
+        "tags": {
+          "channel": "strict"
+        }
+      },
+      "1a": {
+        "tags": {
+          "channel": "visible"
+        }
+      }
+    }
+  }
+}
