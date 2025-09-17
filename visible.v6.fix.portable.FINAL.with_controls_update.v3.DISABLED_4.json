@@ -458,12 +458,12 @@
     }
   ],
   "_bootstrap": {
-    "flags": {
-      "step17_enabled": true
-    },
     "on_load": {
       "banner_text": "Welcome back 👋\n- Required user checkpoints: Step 0 (Product Info), Media Upload, CSV uploads (3/4/6), Record Type decision (16).\n- CSV schemas are defined under /_policy/csv_ingest/* (strict headers).\n- Current mode: preview (learning mode). Export (Step 17) is ENABLED.\n- Resume point → last: 16, next: 18. Use checkpoints at 16 & 18 to review/fix.\n",
       "session_banner": true
+    },
+    "flags": {
+      "step17_enabled": true
     }
   },
   "_commands": {
@@ -976,16 +976,6 @@
       "baseline_applied_at": "2025-09-08T21:19:13.860814Z",
       "hardened_at": "2025-09-08T21:13:49.469030Z"
     },
-    "export_log": [
-      {
-        "event": "policy_upgrade",
-        "export_sha256": null,
-        "filename": "visible.v5.json",
-        "notes": "Enable auto-versioning, hash policy, and export log.",
-        "ts": "2025-09-12T21:29:45+0300",
-        "version": 5
-      }
-    ],
     "final_version": "v7-relaxed",
     "first_message_template": "Final JSON’u yükledim, doğrula. Beklenen: name=FINALLOCK__WITH_TRIGGER__PATCHED_v7_relaxed.json. Doğrulanmadan hiçbir adımı çalıştırma. Sadece DIGEST/HALT.",
     "fixed_at": "2025-09-05T16:14:42.167036Z",
@@ -1003,7 +993,17 @@
       "oturum": "Oturum kapanınca asla varsaymam; tekrar JSON isterim.",
       "success": "Yüklenirse: sadece DIGEST/HALT; tablo/Excel yok; öneri/sertleştirme yok."
     },
-    "version": "v8_relaxed"
+    "version": "v8_relaxed",
+    "export_log": [
+      {
+        "event": "policy_upgrade",
+        "version": 5,
+        "filename": "visible.v5.json",
+        "ts": "2025-09-12T21:29:45+0300",
+        "export_sha256": null,
+        "notes": "Enable auto-versioning, hash policy, and export log."
+      }
+    ]
   },
   "_padding": "                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    ",
   "_policy": {
@@ -7281,55 +7281,6 @@
       },
       "require_artifact_after_write": true
     },
-    "export": {
-      "fallback": {
-        "constraints": {
-          "must_confirm": true,
-          "note": "Eğer GPT raw linkten dosyayı çekemezse, kullanıcı aynı dosyayı buradan yüklemelidir. Yükleme yapıldıktan sonra pack üretimi garanti edilir.",
-          "require_user_task": true
-        },
-        "fallback_mode": "manual_upload",
-        "preferred_mode": "raw_link",
-        "raw_link_template": "https://raw.githubusercontent.com/mertgs190500/json-proje/main/{filename}"
-      },
-      "github": {
-        "branch": "main",
-        "raw_link": "https://raw.githubusercontent.com/{user}/{repo}/{branch}/{filename}",
-        "repo": "json-proje",
-        "user": "mertgs190500"
-      },
-      "hash_policy": {
-        "enabled": true,
-        "record_to": "/_meta/export_log[].export_sha256",
-        "source": "steps.17.export.sha256"
-      },
-      "naming": {
-        "clock": {
-          "format": {
-            "date": "yyyyMMdd",
-            "time": "HHmm"
-          },
-          "tz": "Europe/Istanbul"
-        },
-        "defaults": {
-          "channel": "strict",
-          "version": "v{inc}"
-        },
-        "pattern": "{channel}.{version}.{date}_{time}.json"
-      },
-      "versioning": {
-        "current": 5,
-        "mode": "auto_increment",
-        "pattern": "visible.v{N}.json"
-      },
-      "zip_distribution": {
-        "enabled": true,
-        "filename_pattern": "visible.v{N}.zip",
-        "include": [
-          "{export.filename}"
-        ]
-      }
-    },
     "final_artifacts": {
       "historical": [
         {
@@ -7556,10 +7507,7 @@
       "notes": "CSV ingest tolerant policy: Turkish/Office-2007 friendly; repairs only drop leading index col or trailing empty col; never invent NaN; preserve quotes; block on header length mismatch."
     },
     "integrity": {
-      "algorithm": "sha256",
-      "mode": "auto",
       "on_mismatch": "FAIL_AND_REPORT",
-      "on_missing": "compute_and_set",
       "section_hashes": {
         "csv_rules": "sha256:<auto>",
         "final_safety": "sha256:<auto>",
@@ -7567,15 +7515,18 @@
         "policy_core": "sha256:<auto>",
         "steps": "sha256:<auto>"
       },
+      "verify_sections_on": [
+        "pre_run",
+        "finalize"
+      ],
+      "algorithm": "sha256",
+      "mode": "auto",
+      "on_missing": "compute_and_set",
       "section_targets": [
         "/workflow_patches/steps/16",
         "/workflow_patches/steps/17",
         "/_policy/export",
         "/_meta/export_log"
-      ],
-      "verify_sections_on": [
-        "pre_run",
-        "finalize"
       ]
     },
     "language": {
@@ -8593,15 +8544,64 @@
       "update_requires_phrase": "^ONAY:\\s+GÜNCELLE\\b.+"
     },
     "zip_distribution": {
-      "enabled": true,
       "enforce_zip": true,
-      "filename_pattern": "visible.v{N}.zip",
-      "hash_algorithm": "SHA256",
       "hash_target": "zip",
+      "note": "distribute and verify only zipped artefact",
+      "enabled": true,
+      "filename_pattern": "visible.v{N}.zip",
       "include": [
         "visible.v{N}.json"
       ],
-      "note": "distribute and verify only zipped artefact"
+      "hash_algorithm": "SHA256"
+    },
+    "export": {
+      "naming": {
+        "pattern": "{channel}.{version}.{date}_{time}.json",
+        "defaults": {
+          "channel": "strict",
+          "version": "v{inc}"
+        },
+        "clock": {
+          "tz": "Europe/Istanbul",
+          "format": {
+            "date": "yyyyMMdd",
+            "time": "HHmm"
+          }
+        }
+      },
+      "github": {
+        "user": "mertgs190500",
+        "repo": "json-proje",
+        "branch": "main",
+        "raw_link": "https://raw.githubusercontent.com/{user}/{repo}/{branch}/{filename}"
+      },
+      "fallback": {
+        "preferred_mode": "raw_link",
+        "raw_link_template": "https://raw.githubusercontent.com/mertgs190500/json-proje/main/{filename}",
+        "fallback_mode": "manual_upload",
+        "constraints": {
+          "must_confirm": true,
+          "require_user_task": true,
+          "note": "Eğer GPT raw linkten dosyayı çekemezse, kullanıcı aynı dosyayı buradan yüklemelidir. Yükleme yapıldıktan sonra pack üretimi garanti edilir."
+        }
+      },
+      "versioning": {
+        "mode": "auto_increment",
+        "pattern": "visible.v{N}.json",
+        "current": 5
+      },
+      "hash_policy": {
+        "enabled": true,
+        "source": "steps.17.export.sha256",
+        "record_to": "/_meta/export_log[].export_sha256"
+      },
+      "zip_distribution": {
+        "enabled": true,
+        "filename_pattern": "visible.v{N}.zip",
+        "include": [
+          "{export.filename}"
+        ]
+      }
     }
   },
   "_product_static": {
@@ -8767,18 +8767,6 @@
       "9": "SEO Keyword Refinement",
       "seo_package": "SEO Package QC"
     },
-    "settings": {
-      "deterministic_seed": 42,
-      "preview_render": {
-        "collapse_whitespace": false,
-        "disable_autonumbering": true,
-        "disable_bullets": true,
-        "markdown": false,
-        "plain_text": true
-      },
-      "session_variance": 0,
-      "text_only_preview": true
-    },
     "source_of_truth": "user_defined",
     "step_defaults": {
       "enforcement": {
@@ -8865,7 +8853,6 @@
       "10": {
         "auto_continue": false,
         "await_user": true,
-        "display_contract": "render_full",
         "enforcement": {
           "no_skip": false,
           "on_violation": "warn"
@@ -8889,11 +8876,6 @@
             "rule_check",
             "summary"
           ]
-        },
-        "ui_output": {
-          "disable_autonumbering": true,
-          "disable_bullets": true,
-          "force_plain_text": true
         },
         "validators": [
           {
@@ -8931,12 +8913,17 @@
             "type": "content_regex_forbid"
           }
         ],
-        "validators_required": false
+        "validators_required": false,
+        "display_contract": "render_full",
+        "ui_output": {
+          "force_plain_text": true,
+          "disable_autonumbering": true,
+          "disable_bullets": true
+        }
       },
       "11": {
         "auto_continue": false,
         "await_user": true,
-        "display_contract": "render_full",
         "enforcement": {
           "no_skip": false,
           "on_violation": "warn"
@@ -8961,11 +8948,6 @@
             "rule_check",
             "summary"
           ]
-        },
-        "ui_output": {
-          "disable_autonumbering": true,
-          "disable_bullets": true,
-          "force_plain_text": true
         },
         "validators": [
           {
@@ -9003,12 +8985,17 @@
             "type": "content_regex_forbid"
           }
         ],
-        "validators_required": false
+        "validators_required": false,
+        "display_contract": "render_full",
+        "ui_output": {
+          "force_plain_text": true,
+          "disable_autonumbering": true,
+          "disable_bullets": true
+        }
       },
       "12": {
         "auto_continue": false,
         "await_user": true,
-        "display_contract": "render_full",
         "enforcement": {
           "no_skip": false,
           "on_violation": "warn"
@@ -9036,11 +9023,6 @@
             "rule_check",
             "summary"
           ]
-        },
-        "ui_output": {
-          "disable_autonumbering": true,
-          "disable_bullets": true,
-          "force_plain_text": true
         },
         "validators": [
           {
@@ -9083,7 +9065,13 @@
             "type": "content_regex_forbid"
           }
         ],
-        "validators_required": false
+        "validators_required": false,
+        "display_contract": "render_full",
+        "ui_output": {
+          "force_plain_text": true,
+          "disable_autonumbering": true,
+          "disable_bullets": true
+        }
       },
       "13": {
         "auto_continue": false,
@@ -9378,7 +9366,6 @@
       "3a": {
         "auto_continue": false,
         "await_user": true,
-        "display_contract": "render_full",
         "enforcement": {
           "no_skip": false,
           "on_violation": "warn"
@@ -9493,11 +9480,6 @@
             "summary"
           ]
         },
-        "ui_output": {
-          "disable_autonumbering": true,
-          "disable_bullets": true,
-          "force_plain_text": true
-        },
         "validators": [
           {
             "fn": "count_at_least",
@@ -9607,12 +9589,17 @@
             "type": "similarity_cap"
           }
         ],
-        "validators_required": false
+        "validators_required": false,
+        "display_contract": "render_full",
+        "ui_output": {
+          "force_plain_text": true,
+          "disable_autonumbering": true,
+          "disable_bullets": true
+        }
       },
       "3b": {
         "auto_continue": false,
         "await_user": true,
-        "display_contract": "render_full",
         "enforcement": {
           "no_skip": true,
           "on_violation": "block"
@@ -9679,11 +9666,6 @@
             "summary"
           ]
         },
-        "ui_output": {
-          "disable_autonumbering": true,
-          "disable_bullets": true,
-          "force_plain_text": true
-        },
         "validators": [
           {
             "fn": "equals",
@@ -9731,7 +9713,13 @@
             "left": "outputs.status",
             "right": "DRAFT"
           }
-        ]
+        ],
+        "display_contract": "render_full",
+        "ui_output": {
+          "force_plain_text": true,
+          "disable_autonumbering": true,
+          "disable_bullets": true
+        }
       },
       "3c": {
         "auto_continue": false,
@@ -10020,7 +10008,6 @@
       "5c": {
         "auto_continue": false,
         "await_user": true,
-        "display_contract": "render_full",
         "enabled": true,
         "requires": [
           "5b"
@@ -10030,10 +10017,11 @@
         "ui_directives": {
           "hidden": false
         },
+        "validators_required": false,
+        "display_contract": "render_full",
         "ui_output": {
           "summary": "Top8 competitor shop suggestions; select up to 4 to proceed to Step 6."
-        },
-        "validators_required": false
+        }
       },
       "5p": {
         "auto_continue": false,
@@ -10245,7 +10233,19 @@
         "validators_required": false
       }
     },
-    "strict": true
+    "strict": true,
+    "settings": {
+      "text_only_preview": true,
+      "preview_render": {
+        "markdown": false,
+        "plain_text": true,
+        "disable_autonumbering": true,
+        "disable_bullets": true,
+        "collapse_whitespace": false
+      },
+      "deterministic_seed": 42,
+      "session_variance": 0
+    }
   },
   "_self_guard": {
     "abort_on_sha_mismatch": true,
@@ -10470,11 +10470,6 @@
         }
       ],
       "product_fixed": {
-        "color_display": [
-          "Yellow Gold",
-          "White Gold",
-          "Rose Gold"
-        ],
         "colors": [
           "Yellow Gold",
           "White Gold",
@@ -10494,27 +10489,12 @@
           "10K": "xxx USD",
           "14K": "xxx USD",
           "18K": "xxx USD"
-        }
-      },
-      "shipping": {
-        "customs": {
-          "seller_pays_duties": true
         },
-        "delivery_time": "2–5 business days",
-        "free_shipping": true,
-        "packaging": {
-          "gift_box": true,
-          "gift_note": true
-        },
-        "processing_time": "1–3 business days",
-        "target_markets": [
-          "CA",
-          "US",
-          "DE",
-          "UK",
-          "FR"
-        ],
-        "tracking": true
+        "color_display": [
+          "Yellow Gold",
+          "White Gold",
+          "Rose Gold"
+        ]
       },
       "store_logistics": {
         "customs_note": "Satıcı gümrük vergisini öder",
@@ -10537,6 +10517,26 @@
         ],
         "shipping_cost": "Ücretsiz kargo",
         "shipping_profile": "LUXURYJEWELERY",
+        "tracking": true
+      },
+      "shipping": {
+        "target_markets": [
+          "CA",
+          "US",
+          "DE",
+          "UK",
+          "FR"
+        ],
+        "processing_time": "1–3 business days",
+        "free_shipping": true,
+        "packaging": {
+          "gift_box": true,
+          "gift_note": true
+        },
+        "customs": {
+          "seller_pays_duties": true
+        },
+        "delivery_time": "2–5 business days",
         "tracking": true
       }
     },
@@ -26464,17 +26464,17 @@
     "gates_model": "gates_pass = user_done && gpt_done && validations_ok",
     "guards": {
       "require_ack_before": {
-        "csv_upload_competitor": {
-          "before_step": "6"
-        },
-        "csv_upload_similar": {
-          "before_step": "3"
+        "media_upload": {
+          "before_step": "1a"
         },
         "csv_upload_top_listings": {
           "before_step": "4"
         },
-        "media_upload": {
-          "before_step": "1a"
+        "csv_upload_similar": {
+          "before_step": "3"
+        },
+        "csv_upload_competitor": {
+          "before_step": "6"
         },
         "record_type_decision": {
           "before_step": "16"
@@ -28251,15 +28251,6 @@
           "require_validations_pass": false
         },
         "description": "product_record kaydını ekranda gösterir; veri tek kaynaktan okunur.",
-        "display": {
-          "render_full": true,
-          "sections_auto": [
-            {
-              "bind": "review_confirmed",
-              "title": "Review Confirmed"
-            }
-          ]
-        },
         "display_contract": {
           "block_until_user_ack": true,
           "prompt_to_user": "Yukarıdaki Product Info tam görünümüdür. Değişiklik var mı? (EVET/HAYIR). EVET ise alan=değer biçiminde yazın.",
@@ -28326,11 +28317,6 @@
           }
         },
         "product_info": {
-          "ads": {
-            "daily_budget_usd": 10,
-            "target_locale": "en-US",
-            "target_market": "US"
-          },
           "fixed_product": {
             "colors": [
               "Yellow Gold",
@@ -28380,6 +28366,11 @@
             "shipping_fee": "Ücretsiz kargo",
             "shipping_profile": "LUXURYJEWELERY",
             "tracking": true
+          },
+          "ads": {
+            "daily_budget_usd": 10,
+            "target_market": "US",
+            "target_locale": "en-US"
           }
         },
         "requires": [],
@@ -28426,6 +28417,15 @@
             "equals": true,
             "field": "outputs.review_confirmed"
           }
+        },
+        "display": {
+          "render_full": true,
+          "sections_auto": [
+            {
+              "title": "Review Confirmed",
+              "bind": "review_confirmed"
+            }
+          ]
         }
       },
       "00": {
@@ -28594,1188 +28594,6 @@
             "WARN",
             "FAIL"
           ]
-        },
-        "control_matrix": {
-          "enforcement": {
-            "fail_fast": true,
-            "report_paths": [
-              "/workflow_patches/steps/0a/control_matrix",
-              "/_policy/integrity"
-            ],
-            "require_all_steps_have_title": true
-          },
-          "global": {
-            "digest_only_until_step": 16,
-            "export_policy": {
-              "fallback": "manual_upload",
-              "prefer": "raw_link"
-            },
-            "integrity_checks": [
-              "/_policy/critical.required_paths",
-              "/_policy/integrity.section_hashes",
-              "workflow_patches.steps_registry_lock"
-            ],
-            "required_stops": [
-              0,
-              1,
-              3,
-              4,
-              6,
-              16
-            ],
-            "write_policy": {
-              "allowed_root": "/final/**",
-              "mode": "copy_only"
-            }
-          },
-          "hydration": {
-            "sources": [
-              "steps/*",
-              "_run_order/steps/*"
-            ],
-            "step_titles": "enforced"
-          },
-          "meta": {
-            "author": "gpt",
-            "generated_at": "2025-09-13T11:49:46.214728Z",
-            "merged_at": "2025-09-13T11:55:15.465447Z",
-            "on_violation": "RUN_FAIL",
-            "principle": "mirror-all-rules-here"
-          },
-          "steps": {
-            "0": {
-              "must_confirm": true,
-              "outputs_expected": [
-                "outputs.review_confirmed"
-              ],
-              "show_paths_include": [
-                "/workflow_patches/steps/0/product_info",
-                "/_product_static/variation_prices"
-              ]
-            },
-            "00": {
-              "must_confirm": false,
-              "purpose": "pre-run self-check"
-            },
-            "0a": {
-              "checks": [
-                "digest_only_enforced",
-                "export_policy_defined",
-                "write_policy_enforced",
-                "required_stops_present",
-                "integrity_checks_pass"
-              ],
-              "must_confirm": false,
-              "purpose": "policy_enforcement_and_integrity_gate"
-            },
-            "0a_checks_5c_presence": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5c.title",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5c.stop_for_confirmation",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5c.constraints.requires_input_from",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.5c.display_contract",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_content_family": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.9",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.10",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.11",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.12",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_gift_rule_sync": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.4.forbidden",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.4a.forbidden",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.4b.forbidden",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5.forbidden",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5a.forbidden",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5b.forbidden",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_intake_enforcement": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.4.constraints.require_csv",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.4.constraints.empty_intake",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.4a.constraints.require_csv",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.4a.constraints.empty_intake",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.4b.constraints.require_csv",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.4b.constraints.empty_intake",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5.constraints.require_csv",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5.constraints.empty_intake",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5a.constraints.require_csv",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5a.constraints.empty_intake",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5b.constraints.require_csv",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.5b.constraints.empty_intake",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.6.constraints.require_csv",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.6.constraints.empty_intake",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.6a.constraints.require_csv",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.6a.constraints.empty_intake",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.6b.constraints.require_csv",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.6b.constraints.empty_intake",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_preview_settings": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.settings.text_only_preview",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.settings.preview_render.plain_text",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.settings.preview_render.disable_autonumbering",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.settings.preview_render.disable_bullets",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.settings.deterministic_seed",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.settings.session_variance",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_registry_lock": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps_registry_lock",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_step0_shipping": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "context_info.basics.shipping.delivery_time",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "context_info.basics.shipping.free_shipping",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "context_info.basics.shipping.tracking",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "context_info.basics.shipping.packaging.gift_box",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "context_info.basics.shipping.packaging.gift_note",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "context_info.basics.shipping.customs.seller_pays_duties",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "context_info.basics.shipping.target_markets",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_step_ui_plain": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.3a.ui_output.force_plain_text",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.3a.ui_output.disable_autonumbering",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.3a.display_contract",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.3b.ui_output.force_plain_text",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.3b.ui_output.disable_autonumbering",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.3b.display_contract",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.10.ui_output.force_plain_text",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.10.ui_output.disable_autonumbering",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.10.display_contract",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.11.ui_output.force_plain_text",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.11.ui_output.disable_autonumbering",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.11.display_contract",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.12.ui_output.force_plain_text",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.12.ui_output.disable_autonumbering",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.steps.12.display_contract",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_ui_prefs": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "_run_order.settings.text_only_preview",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_vision_schema": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.1.constraints.vision_extraction.enabled",
-                  "required": true
-                },
-                {
-                  "fail_on_violation": true,
-                  "path": "workflow_patches.steps.1.constraints.vision_extraction.supported_fields",
-                  "required": true
-                }
-              ]
-            },
-            "0a_checks_zero_acceptance": {
-              "checks": [
-                {
-                  "fail_on_violation": true,
-                  "path": "_policy.workflow.guards.zero_acceptance_strategy",
-                  "required": true
-                }
-              ]
-            },
-            "1": {
-              "constraints": {
-                "formats": [
-                  "jpg",
-                  "jpeg",
-                  "png",
-                  "webp"
-                ],
-                "min_images": 5,
-                "min_short_edge_px": 2000
-              },
-              "must_confirm": true,
-              "purpose": "media_upload_qc"
-            },
-            "10": {
-              "constraints": {
-                "coherence_with": [
-                  "12.tags",
-                  "11.description"
-                ],
-                "conditional_components": {
-                  "color_variant": "optional_if_multi_variant"
-                },
-                "forbidden_unless_true_in_step0": {
-                  "personalized": "require: product_info.personalization == true",
-                  "stone_type": "require: product_info.stone.type is known"
-                },
-                "front_load_max_chars": 40,
-                "language": {
-                  "disallow_misleading_claims": true,
-                  "prevent_all_caps": true
-                },
-                "max_length": 140,
-                "no_keyword_stuffing": true,
-                "require_components": {
-                  "long_tail_variant": true,
-                  "product_type": true,
-                  "step0_metal_and_karat": true
-                },
-                "trim_duplicates": true,
-                "unknown_stone_policy": "do_not_name_stone_in_title_when_unknown"
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/10/constraints"
-                ]
-              },
-              "must_confirm": true,
-              "outputs_expected": [
-                "draft.title"
-              ],
-              "purpose": "Title quality & policy enforcement (mobile-first, relevance, coherence)"
-            },
-            "11": {
-              "constraints": {
-                "keyword_policy": {
-                  "coherence_with": [
-                    "10.title",
-                    "12.tags"
-                  ],
-                  "long_tail_mentions": {
-                    "max": 4,
-                    "min": 2
-                  },
-                  "no_keyword_stuffing": true,
-                  "unique_root_repeat_limit": 1
-                },
-                "language": {
-                  "avoid_slang": true,
-                  "locale": "en-US",
-                  "prevent_all_caps": true,
-                  "spelling": "american"
-                },
-                "length": {
-                  "max_words": 500,
-                  "min_words": 250
-                },
-                "paragraphs": {
-                  "count": 3,
-                  "p1_max_chars": 180,
-                  "p1_must_contain": [
-                    "step0_metal_and_karat",
-                    "product_type",
-                    "benefit_or_value"
-                  ],
-                  "p2_must_cover": [
-                    "metal_karat_options",
-                    "color_options_if_present",
-                    "size_or_dimensions",
-                    "comfort_or_finish",
-                    "stone_policy"
-                  ],
-                  "p3_must_cover": [
-                    "shipping_prep_time",
-                    "origin_country",
-                    "care_or_warranty",
-                    "cta_message"
-                  ]
-                },
-                "step0_binding": {
-                  "require_metal_and_karat": true,
-                  "require_origin_country": true,
-                  "require_product_type": true,
-                  "require_shipping_prep_time": true
-                },
-                "truthfulness": {
-                  "forbidden_unless_true_in_step0": {
-                    "personalized": "require: product_info.personalization == true",
-                    "stone_type": "require: product_info.stone.type is known"
-                  },
-                  "unknown_stone_policy": "must_include_neutral_statement_if_unknown"
-                }
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/11/constraints"
-                ]
-              },
-              "must_confirm": true,
-              "outputs_expected": [
-                "draft.description"
-              ],
-              "purpose": "Description quality & policy enforcement (mobile-first, 3-paragraph, US English, alignment)"
-            },
-            "12": {
-              "constraints": {
-                "alignment": {
-                  "must_align_with": [
-                    "10.title",
-                    "11.description"
-                  ],
-                  "require_core_ngram_from_title": true
-                },
-                "counts": {
-                  "exact_tags": 13,
-                  "max_tag_length": 20
-                },
-                "dedupe": {
-                  "lemmatization": "en",
-                  "max_root_repeats": {
-                    "default": 1,
-                    "product_root": 2
-                  },
-                  "similarity_threshold": 0.7,
-                  "unique_by_root": true
-                },
-                "diversity_bucket_targets": {
-                  "long_tail": {
-                    "max": 5,
-                    "min": 3
-                  },
-                  "material_karat": 1,
-                  "product": 1,
-                  "recipient_or_occasion": {
-                    "max": 2,
-                    "min": 1
-                  },
-                  "size_finish": {
-                    "max": 2,
-                    "min": 1
-                  },
-                  "style": 2
-                },
-                "forbidden": {
-                  "brand_or_trademark": true,
-                  "generic_spam_terms": [
-                    "gift",
-                    "gift idea",
-                    "trending"
-                  ],
-                  "misleading_or_unverified": true,
-                  "non_us_spelling": [
-                    "colour"
-                  ]
-                },
-                "language": {
-                  "locale": "en-US",
-                  "prevent_all_caps": true
-                },
-                "source_mix": {
-                  "competitors": {
-                    "max": 0.2,
-                    "min": 0.1
-                  },
-                  "own_pool": {
-                    "max": 0.6,
-                    "min": 0.5
-                  },
-                  "relevance_gate_required": true,
-                  "top_products_csv": {
-                    "max": 0.3,
-                    "min": 0.2
-                  }
-                },
-                "truthfulness": {
-                  "only_if_true_in_step0": {
-                    "personalized": "require: product_info.personalization == true",
-                    "stone_type": "require: product_info.stone.type is known"
-                  }
-                }
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "log": {
-                  "alignment_checks": true,
-                  "dedupe_decisions": true,
-                  "source_mix_breakdown": true
-                },
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/12/constraints"
-                ]
-              },
-              "outputs_expected": [
-                "draft.tags[13]"
-              ],
-              "purpose": "Final tags quality & policy enforcement (uniqueness, diversity, alignment)"
-            },
-            "16": {
-              "export_ui": [
-                "filename",
-                "github_raw_link"
-              ],
-              "must_confirm": true,
-              "post": [
-                "zip",
-                "hash"
-              ],
-              "purpose": "export_and_hash"
-            },
-            "1a": {
-              "must_confirm": false,
-              "outputs_expected": [
-                "media.checklist",
-                "media.issues[]",
-                "media.recommendations[]",
-                "media.qc_report"
-              ],
-              "purpose": "media_analysis_and_seo_alignment"
-            },
-            "1b": {
-              "constraints": {
-                "count": 8,
-                "dedupe": true,
-                "two_word_each": true
-              },
-              "must_confirm": false,
-              "purpose": "two-word_search_suggestions"
-            },
-            "3": {
-              "constraints": {
-                "files_required": 8,
-                "keyword_column": "Keyword"
-              },
-              "must_confirm": true,
-              "purpose": "similar_csv_ingestion"
-            },
-            "3a": {
-              "constraints": {
-                "focus_keywords_count": 4,
-                "max_same_root_in_top50": 3,
-                "min_pool_size": 300,
-                "notes_required": true,
-                "scoring": {
-                  "notes": "Normalize inputs to [0,1]; sum weights; higher is better; drop on risk.",
-                  "weights": {
-                    "competition": -1.0,
-                    "cr": 1.0,
-                    "ctr": 0.8,
-                    "novelty_gain": 0.7,
-                    "risk_flags": -2.0,
-                    "source_weight": 0.3,
-                    "volume": 1.0
-                  }
-                },
-                "semantic_similarity_threshold": 0.85,
-                "source_mix": {
-                  "competitors": {
-                    "max": 0.2,
-                    "min": 0.1
-                  },
-                  "own_pool": {
-                    "max": 0.6,
-                    "min": 0.5
-                  },
-                  "relevance_gate_required": true,
-                  "top_products_csv": {
-                    "max": 0.3,
-                    "min": 0.2
-                  }
-                },
-                "tie_breakers": [
-                  "higher conversion_rate",
-                  "higher overall score",
-                  "better segment diversification"
-                ],
-                "use_in_3b": 1
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/3a/constraints"
-                ]
-              },
-              "must_confirm": false,
-              "outputs_expected": [
-                "keywords.drop_log[]",
-                "keywords.focus[1..4].provisional",
-                "keywords.pool.ranked[]",
-                "keywords.pool.tier1.top50[]",
-                "keywords.pool.tier2.next150[]",
-                "keywords.pool.tier3.rest[]",
-                "keywords.segment_coverage",
-                "keywords.selection_notes"
-              ],
-              "purpose": "focus_selection_and_pool_build",
-              "seo_requirements": {
-                "competition": "required",
-                "ctr_or_conversion_rate": "required",
-                "long_tail": "required",
-                "search_volume": "required",
-                "title_desc_tag_alignment": "required"
-              }
-            },
-            "3b": {
-              "constraints": {
-                "inputs_required": [
-                  "3a.keywords.focus",
-                  "3a.keywords.pool.ranked[]",
-                  "3a.keywords.segment_coverage"
-                ]
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/3b/constraints"
-                ]
-              },
-              "must_confirm": false,
-              "note": "No explicit outputs (title/desc/tags) in this step per final JSON.",
-              "outputs_expected": [
-                "draft.seed.description_outline.p1_core",
-                "draft.seed.description_outline.p2_features",
-                "draft.seed.description_outline.p3_logistics_cta",
-                "draft.seed.tag_buckets.long_tail",
-                "draft.seed.tag_buckets.material_karat",
-                "draft.seed.tag_buckets.product",
-                "draft.seed.tag_buckets.recipient_or_occasion",
-                "draft.seed.tag_buckets.size_finish",
-                "draft.seed.tag_buckets.style",
-                "draft.seed.title_core_ngram",
-                "source_mix_log"
-              ],
-              "purpose": "post-3a policy enforcement",
-              "ruleset_policy_keys_expected": [
-                "add_missing",
-                "keep_extras",
-                "mode",
-                "on_mismatch",
-                "reorder_known"
-              ]
-            },
-            "4": {
-              "must_confirm": true,
-              "purpose": "focus_selection_user_confirmation"
-            },
-            "4a": {
-              "constraints": {
-                "forbidden": {
-                  "brand_or_trademark": true,
-                  "generic_spam_terms": [
-                    "gift",
-                    "gift idea",
-                    "trending"
-                  ]
-                },
-                "language": {
-                  "locale": "en-US",
-                  "prevent_all_caps": true
-                },
-                "min_recency_window_days": 90,
-                "must_match": {
-                  "product_type": true
-                },
-                "per_shop_cap": 0.25,
-                "price_band_tolerance": 0.3,
-                "require_one_of": [
-                  "metal_karat_match",
-                  "style_or_motif_match"
-                ],
-                "similarity": {
-                  "cosine_min": 0.6,
-                  "jaccard_min": 0.5
-                }
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/4a/constraints"
-                ]
-              },
-              "outputs_expected": [
-                "top_products.raw[]"
-              ],
-              "purpose": "Top listings upload (raw intake with relevance gating)"
-            },
-            "4b": {
-              "constraints": {
-                "dedupe": {
-                  "by_title_and_tags": true
-                },
-                "forbidden": {
-                  "brand_or_trademark": true,
-                  "generic_spam_terms": [
-                    "gift",
-                    "gift idea",
-                    "trending"
-                  ]
-                },
-                "language": {
-                  "locale": "en-US",
-                  "prevent_all_caps": true
-                },
-                "normalize": [
-                  "lowercase",
-                  "trim",
-                  "collapse_spaces",
-                  "strip_punctuation"
-                ],
-                "similarity": {
-                  "cosine_min": 0.6,
-                  "jaccard_min": 0.5
-                }
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/4b/constraints"
-                ]
-              },
-              "outputs_expected": [
-                "top_products.clean[]"
-              ],
-              "purpose": "Top listings clean (normalize + dedupe + relevance confirm)"
-            },
-            "5": {
-              "constraints": {
-                "forbidden": {
-                  "brand_or_trademark": true,
-                  "generic_spam_terms": [
-                    "gift",
-                    "gift idea",
-                    "trending"
-                  ]
-                },
-                "language": {
-                  "locale": "en-US",
-                  "prevent_all_caps": true
-                },
-                "min_recency_window_days": 60,
-                "must_match": {
-                  "product_type": true
-                },
-                "per_shop_cap": 0.25,
-                "price_band_tolerance": 0.3,
-                "require_one_of": [
-                  "metal_karat_match",
-                  "style_or_motif_match"
-                ],
-                "similarity": {
-                  "cosine_min": 0.6,
-                  "jaccard_min": 0.5
-                }
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/5/constraints"
-                ]
-              },
-              "must_confirm": false,
-              "outputs_expected": [
-                "top_products.narrow_raw[]"
-              ],
-              "purpose": "Top listings upload (narrow category focus)"
-            },
-            "5a": {
-              "must_confirm": false,
-              "purpose": "ngrams_and_recombination"
-            },
-            "5b": {
-              "must_confirm": false,
-              "purpose": "filtering_and_prioritization"
-            },
-            "6": {
-              "constraints": {
-                "forbidden": {
-                  "brand_or_trademark": true,
-                  "generic_spam_terms": [
-                    "gift",
-                    "gift idea",
-                    "trending"
-                  ]
-                },
-                "language": {
-                  "locale": "en-US",
-                  "prevent_all_caps": true
-                },
-                "must_match": {
-                  "product_type": true
-                },
-                "per_shop_cap": 0.25,
-                "require_one_of": [
-                  "metal_karat_match",
-                  "style_or_motif_match"
-                ],
-                "similarity": {
-                  "cosine_min": 0.6,
-                  "jaccard_min": 0.5
-                }
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/6/constraints"
-                ]
-              },
-              "must_confirm": true,
-              "outputs_expected": [
-                "competitors.raw[]"
-              ],
-              "purpose": "Competitor shops upload (raw intake with shop balancing)"
-            },
-            "6a": {
-              "constraints": {
-                "extract_themes": true,
-                "forbidden": {
-                  "brand_or_trademark": true,
-                  "generic_spam_terms": [
-                    "gift",
-                    "gift idea",
-                    "trending"
-                  ]
-                },
-                "shop_bias_cap": 0.25,
-                "similarity": {
-                  "cosine_min": 0.6,
-                  "jaccard_min": 0.5
-                }
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/6a/constraints"
-                ]
-              },
-              "outputs_expected": [
-                "competitors.themes[]",
-                "competitors.bias_report"
-              ],
-              "purpose": "Competitor analysis (theme extraction + bias control)"
-            },
-            "6b": {
-              "constraints": {
-                "dedupe": {
-                  "by_title_and_tags": true
-                },
-                "forbidden": {
-                  "brand_or_trademark": true,
-                  "generic_spam_terms": [
-                    "gift",
-                    "gift idea",
-                    "trending"
-                  ]
-                },
-                "language": {
-                  "locale": "en-US",
-                  "prevent_all_caps": true
-                },
-                "normalize": [
-                  "lowercase",
-                  "trim",
-                  "collapse_spaces",
-                  "strip_punctuation"
-                ],
-                "similarity": {
-                  "cosine_min": 0.6,
-                  "jaccard_min": 0.5
-                }
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/6b/constraints"
-                ]
-              },
-              "outputs_expected": [
-                "competitors.clean[]"
-              ],
-              "purpose": "Competitor listings clean (normalize + dedupe + relevance confirm)"
-            },
-            "8": {
-              "constraints": {
-                "ad_groups": {
-                  "count": {
-                    "max": 4,
-                    "min": 3
-                  },
-                  "theme_overlap_allowed": false,
-                  "us_locale_required": true
-                },
-                "alignment": {
-                  "must_carry_themes_from": [
-                    "10.title",
-                    "12.tags",
-                    "3a.keywords.focus"
-                  ]
-                },
-                "budget_binding": {
-                  "assume_daily_budget_usd_max": 10,
-                  "budget_ref_path": "/workflow_patches/steps/0/product_info/ads/daily_budget_usd"
-                },
-                "forbidden": {
-                  "brand_or_trademark": true,
-                  "generic_spam_terms": [
-                    "gift",
-                    "gift idea",
-                    "trending"
-                  ]
-                },
-                "inputs_required": [
-                  "3a.keywords.focus",
-                  "3a.keywords.selection_notes",
-                  "12.tags",
-                  "top_products.csv",
-                  "competitors.csv"
-                ]
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/8/constraints"
-                ]
-              },
-              "outputs_expected": [
-                "ads.groups[3..4]"
-              ],
-              "purpose": "Ads campaign skeleton & theming (budget-aware grouping)"
-            },
-            "8a": {
-              "constraints": {
-                "alignment": {
-                  "require_core_ngram_from_title": true
-                },
-                "budget_binding": {
-                  "assume_daily_budget_usd_max": 10,
-                  "budget_ref_path": "/workflow_patches/steps/0/product_info/ads/daily_budget_usd"
-                },
-                "dedupe_similarity_threshold": 0.7,
-                "disallow_broad": true,
-                "inputs_required": [
-                  "ads.groups[]",
-                  "3a.keywords.pool.ranked[]",
-                  "12.tags"
-                ],
-                "language": {
-                  "locale": "en-US",
-                  "prevent_all_caps": true
-                },
-                "long_tail_ratio_min": 0.6,
-                "match_types_allowed": [
-                  "exact",
-                  "phrase"
-                ],
-                "negatives": {
-                  "brand_or_trademark": true,
-                  "cross_negatives_between_groups": true,
-                  "generic": [
-                    "gift",
-                    "gift idea",
-                    "trending"
-                  ]
-                },
-                "negatives_required": true,
-                "per_group_keywords": {
-                  "max": 12,
-                  "min": 8
-                }
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "log": {
-                  "alignment_checks": true,
-                  "dedupe_decisions": true,
-                  "source_mix_breakdown": true
-                },
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/8a/constraints"
-                ]
-              },
-              "outputs_expected": [
-                "ads.keywords[]",
-                "ads.negatives[]"
-              ],
-              "purpose": "Ads keyword generation (long-tail heavy, negatives, budget-aware)"
-            },
-            "9": {
-              "constraints": {
-                "alignment": {
-                  "title_core_ngram_in_ads_keywords": true,
-                  "title_core_ngram_in_tags": true
-                },
-                "inputs_required": [
-                  "10.title",
-                  "11.description",
-                  "12.tags",
-                  "ads.keywords"
-                ],
-                "long_tail_priority": true,
-                "root_repeat_limit": {
-                  "default": 1,
-                  "product_root": 2
-                },
-                "similarity_drop_threshold": 0.7
-              },
-              "enforce": {
-                "fail_on_violation": true,
-                "report_paths": [
-                  "/workflow_patches/steps/0a/control_matrix/steps/9/constraints"
-                ]
-              },
-              "outputs_expected": [
-                "seo.keywords.refined[]",
-                "seo.drop_log[]"
-              ],
-              "purpose": "SEO keyword refinement (dedupe, alignment, Ads↔SEO consolidation)"
-            }
-          }
         },
         "description": "Her CSV türü için analizden önce daima çalışan, bloklamayan temizlik ve standardizasyon.",
         "flow": {
@@ -29952,6 +28770,1188 @@
             ],
             "required_all": true
           }
+        },
+        "control_matrix": {
+          "meta": {
+            "generated_at": "2025-09-13T11:49:46.214728Z",
+            "author": "gpt",
+            "principle": "mirror-all-rules-here",
+            "on_violation": "RUN_FAIL",
+            "merged_at": "2025-09-13T11:55:15.465447Z"
+          },
+          "global": {
+            "digest_only_until_step": 16,
+            "export_policy": {
+              "prefer": "raw_link",
+              "fallback": "manual_upload"
+            },
+            "write_policy": {
+              "mode": "copy_only",
+              "allowed_root": "/final/**"
+            },
+            "required_stops": [
+              0,
+              1,
+              3,
+              4,
+              6,
+              16
+            ],
+            "integrity_checks": [
+              "/_policy/critical.required_paths",
+              "/_policy/integrity.section_hashes",
+              "workflow_patches.steps_registry_lock"
+            ]
+          },
+          "steps": {
+            "0": {
+              "must_confirm": true,
+              "outputs_expected": [
+                "outputs.review_confirmed"
+              ],
+              "show_paths_include": [
+                "/workflow_patches/steps/0/product_info",
+                "/_product_static/variation_prices"
+              ]
+            },
+            "00": {
+              "purpose": "pre-run self-check",
+              "must_confirm": false
+            },
+            "0a": {
+              "purpose": "policy_enforcement_and_integrity_gate",
+              "must_confirm": false,
+              "checks": [
+                "digest_only_enforced",
+                "export_policy_defined",
+                "write_policy_enforced",
+                "required_stops_present",
+                "integrity_checks_pass"
+              ]
+            },
+            "1": {
+              "purpose": "media_upload_qc",
+              "must_confirm": true,
+              "constraints": {
+                "min_images": 5,
+                "formats": [
+                  "jpg",
+                  "jpeg",
+                  "png",
+                  "webp"
+                ],
+                "min_short_edge_px": 2000
+              }
+            },
+            "1a": {
+              "purpose": "media_analysis_and_seo_alignment",
+              "must_confirm": false,
+              "outputs_expected": [
+                "media.checklist",
+                "media.issues[]",
+                "media.recommendations[]",
+                "media.qc_report"
+              ]
+            },
+            "1b": {
+              "purpose": "two-word_search_suggestions",
+              "must_confirm": false,
+              "constraints": {
+                "count": 8,
+                "two_word_each": true,
+                "dedupe": true
+              }
+            },
+            "3": {
+              "purpose": "similar_csv_ingestion",
+              "must_confirm": true,
+              "constraints": {
+                "files_required": 8,
+                "keyword_column": "Keyword"
+              }
+            },
+            "3a": {
+              "purpose": "focus_selection_and_pool_build",
+              "must_confirm": false,
+              "constraints": {
+                "min_pool_size": 300,
+                "max_same_root_in_top50": 3,
+                "semantic_similarity_threshold": 0.85,
+                "focus_keywords_count": 4,
+                "notes_required": true,
+                "tie_breakers": [
+                  "higher conversion_rate",
+                  "higher overall score",
+                  "better segment diversification"
+                ],
+                "use_in_3b": 1,
+                "source_mix": {
+                  "own_pool": {
+                    "min": 0.5,
+                    "max": 0.6
+                  },
+                  "top_products_csv": {
+                    "min": 0.2,
+                    "max": 0.3
+                  },
+                  "competitors": {
+                    "min": 0.1,
+                    "max": 0.2
+                  },
+                  "relevance_gate_required": true
+                },
+                "scoring": {
+                  "weights": {
+                    "volume": 1.0,
+                    "competition": -1.0,
+                    "ctr": 0.8,
+                    "cr": 1.0,
+                    "novelty_gain": 0.7,
+                    "source_weight": 0.3,
+                    "risk_flags": -2.0
+                  },
+                  "notes": "Normalize inputs to [0,1]; sum weights; higher is better; drop on risk."
+                }
+              },
+              "outputs_expected": [
+                "keywords.drop_log[]",
+                "keywords.focus[1..4].provisional",
+                "keywords.pool.ranked[]",
+                "keywords.pool.tier1.top50[]",
+                "keywords.pool.tier2.next150[]",
+                "keywords.pool.tier3.rest[]",
+                "keywords.segment_coverage",
+                "keywords.selection_notes"
+              ],
+              "seo_requirements": {
+                "search_volume": "required",
+                "competition": "required",
+                "ctr_or_conversion_rate": "required",
+                "long_tail": "required",
+                "title_desc_tag_alignment": "required"
+              },
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/3a/constraints"
+                ]
+              }
+            },
+            "3b": {
+              "purpose": "post-3a policy enforcement",
+              "must_confirm": false,
+              "ruleset_policy_keys_expected": [
+                "add_missing",
+                "keep_extras",
+                "mode",
+                "on_mismatch",
+                "reorder_known"
+              ],
+              "note": "No explicit outputs (title/desc/tags) in this step per final JSON.",
+              "constraints": {
+                "inputs_required": [
+                  "3a.keywords.focus",
+                  "3a.keywords.pool.ranked[]",
+                  "3a.keywords.segment_coverage"
+                ]
+              },
+              "outputs_expected": [
+                "draft.seed.description_outline.p1_core",
+                "draft.seed.description_outline.p2_features",
+                "draft.seed.description_outline.p3_logistics_cta",
+                "draft.seed.tag_buckets.long_tail",
+                "draft.seed.tag_buckets.material_karat",
+                "draft.seed.tag_buckets.product",
+                "draft.seed.tag_buckets.recipient_or_occasion",
+                "draft.seed.tag_buckets.size_finish",
+                "draft.seed.tag_buckets.style",
+                "draft.seed.title_core_ngram",
+                "source_mix_log"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/3b/constraints"
+                ]
+              }
+            },
+            "4": {
+              "purpose": "focus_selection_user_confirmation",
+              "must_confirm": true
+            },
+            "5": {
+              "purpose": "Top listings upload (narrow category focus)",
+              "must_confirm": false,
+              "constraints": {
+                "must_match": {
+                  "product_type": true
+                },
+                "require_one_of": [
+                  "metal_karat_match",
+                  "style_or_motif_match"
+                ],
+                "min_recency_window_days": 60,
+                "price_band_tolerance": 0.3,
+                "similarity": {
+                  "jaccard_min": 0.5,
+                  "cosine_min": 0.6
+                },
+                "forbidden": {
+                  "brand_or_trademark": true,
+                  "generic_spam_terms": [
+                    "gift",
+                    "gift idea",
+                    "trending"
+                  ]
+                },
+                "language": {
+                  "locale": "en-US",
+                  "prevent_all_caps": true
+                },
+                "per_shop_cap": 0.25
+              },
+              "outputs_expected": [
+                "top_products.narrow_raw[]"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/5/constraints"
+                ]
+              }
+            },
+            "5a": {
+              "purpose": "ngrams_and_recombination",
+              "must_confirm": false
+            },
+            "5b": {
+              "purpose": "filtering_and_prioritization",
+              "must_confirm": false
+            },
+            "6": {
+              "purpose": "Competitor shops upload (raw intake with shop balancing)",
+              "must_confirm": true,
+              "outputs_expected": [
+                "competitors.raw[]"
+              ],
+              "constraints": {
+                "must_match": {
+                  "product_type": true
+                },
+                "require_one_of": [
+                  "metal_karat_match",
+                  "style_or_motif_match"
+                ],
+                "similarity": {
+                  "jaccard_min": 0.5,
+                  "cosine_min": 0.6
+                },
+                "forbidden": {
+                  "brand_or_trademark": true,
+                  "generic_spam_terms": [
+                    "gift",
+                    "gift idea",
+                    "trending"
+                  ]
+                },
+                "language": {
+                  "locale": "en-US",
+                  "prevent_all_caps": true
+                },
+                "per_shop_cap": 0.25
+              },
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/6/constraints"
+                ]
+              }
+            },
+            "16": {
+              "purpose": "export_and_hash",
+              "must_confirm": true,
+              "export_ui": [
+                "filename",
+                "github_raw_link"
+              ],
+              "post": [
+                "zip",
+                "hash"
+              ]
+            },
+            "10": {
+              "purpose": "Title quality & policy enforcement (mobile-first, relevance, coherence)",
+              "must_confirm": true,
+              "constraints": {
+                "front_load_max_chars": 40,
+                "max_length": 140,
+                "no_keyword_stuffing": true,
+                "trim_duplicates": true,
+                "coherence_with": [
+                  "12.tags",
+                  "11.description"
+                ],
+                "require_components": {
+                  "step0_metal_and_karat": true,
+                  "product_type": true,
+                  "long_tail_variant": true
+                },
+                "conditional_components": {
+                  "color_variant": "optional_if_multi_variant"
+                },
+                "forbidden_unless_true_in_step0": {
+                  "personalized": "require: product_info.personalization == true",
+                  "stone_type": "require: product_info.stone.type is known"
+                },
+                "unknown_stone_policy": "do_not_name_stone_in_title_when_unknown",
+                "language": {
+                  "disallow_misleading_claims": true,
+                  "prevent_all_caps": true
+                }
+              },
+              "outputs_expected": [
+                "draft.title"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/10/constraints"
+                ]
+              }
+            },
+            "11": {
+              "purpose": "Description quality & policy enforcement (mobile-first, 3-paragraph, US English, alignment)",
+              "must_confirm": true,
+              "constraints": {
+                "length": {
+                  "min_words": 250,
+                  "max_words": 500
+                },
+                "paragraphs": {
+                  "count": 3,
+                  "p1_max_chars": 180,
+                  "p1_must_contain": [
+                    "step0_metal_and_karat",
+                    "product_type",
+                    "benefit_or_value"
+                  ],
+                  "p2_must_cover": [
+                    "metal_karat_options",
+                    "color_options_if_present",
+                    "size_or_dimensions",
+                    "comfort_or_finish",
+                    "stone_policy"
+                  ],
+                  "p3_must_cover": [
+                    "shipping_prep_time",
+                    "origin_country",
+                    "care_or_warranty",
+                    "cta_message"
+                  ]
+                },
+                "keyword_policy": {
+                  "no_keyword_stuffing": true,
+                  "long_tail_mentions": {
+                    "min": 2,
+                    "max": 4
+                  },
+                  "unique_root_repeat_limit": 1,
+                  "coherence_with": [
+                    "10.title",
+                    "12.tags"
+                  ]
+                },
+                "language": {
+                  "locale": "en-US",
+                  "spelling": "american",
+                  "avoid_slang": true,
+                  "prevent_all_caps": true
+                },
+                "truthfulness": {
+                  "forbidden_unless_true_in_step0": {
+                    "personalized": "require: product_info.personalization == true",
+                    "stone_type": "require: product_info.stone.type is known"
+                  },
+                  "unknown_stone_policy": "must_include_neutral_statement_if_unknown"
+                },
+                "step0_binding": {
+                  "require_metal_and_karat": true,
+                  "require_product_type": true,
+                  "require_shipping_prep_time": true,
+                  "require_origin_country": true
+                }
+              },
+              "outputs_expected": [
+                "draft.description"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/11/constraints"
+                ]
+              }
+            },
+            "12": {
+              "purpose": "Final tags quality & policy enforcement (uniqueness, diversity, alignment)",
+              "constraints": {
+                "counts": {
+                  "exact_tags": 13,
+                  "max_tag_length": 20
+                },
+                "dedupe": {
+                  "unique_by_root": true,
+                  "max_root_repeats": {
+                    "default": 1,
+                    "product_root": 2
+                  },
+                  "similarity_threshold": 0.7,
+                  "lemmatization": "en"
+                },
+                "diversity_bucket_targets": {
+                  "product": 1,
+                  "material_karat": 1,
+                  "long_tail": {
+                    "min": 3,
+                    "max": 5
+                  },
+                  "style": 2,
+                  "recipient_or_occasion": {
+                    "min": 1,
+                    "max": 2
+                  },
+                  "size_finish": {
+                    "min": 1,
+                    "max": 2
+                  }
+                },
+                "source_mix": {
+                  "own_pool": {
+                    "min": 0.5,
+                    "max": 0.6
+                  },
+                  "top_products_csv": {
+                    "min": 0.2,
+                    "max": 0.3
+                  },
+                  "competitors": {
+                    "min": 0.1,
+                    "max": 0.2
+                  },
+                  "relevance_gate_required": true
+                },
+                "alignment": {
+                  "must_align_with": [
+                    "10.title",
+                    "11.description"
+                  ],
+                  "require_core_ngram_from_title": true
+                },
+                "language": {
+                  "locale": "en-US",
+                  "prevent_all_caps": true
+                },
+                "truthfulness": {
+                  "only_if_true_in_step0": {
+                    "personalized": "require: product_info.personalization == true",
+                    "stone_type": "require: product_info.stone.type is known"
+                  }
+                },
+                "forbidden": {
+                  "brand_or_trademark": true,
+                  "generic_spam_terms": [
+                    "gift",
+                    "gift idea",
+                    "trending"
+                  ],
+                  "non_us_spelling": [
+                    "colour"
+                  ],
+                  "misleading_or_unverified": true
+                }
+              },
+              "outputs_expected": [
+                "draft.tags[13]"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/12/constraints"
+                ],
+                "log": {
+                  "source_mix_breakdown": true,
+                  "dedupe_decisions": true,
+                  "alignment_checks": true
+                }
+              }
+            },
+            "8": {
+              "purpose": "Ads campaign skeleton & theming (budget-aware grouping)",
+              "constraints": {
+                "inputs_required": [
+                  "3a.keywords.focus",
+                  "3a.keywords.selection_notes",
+                  "12.tags",
+                  "top_products.csv",
+                  "competitors.csv"
+                ],
+                "ad_groups": {
+                  "count": {
+                    "min": 3,
+                    "max": 4
+                  },
+                  "theme_overlap_allowed": false,
+                  "us_locale_required": true
+                },
+                "forbidden": {
+                  "brand_or_trademark": true,
+                  "generic_spam_terms": [
+                    "gift",
+                    "gift idea",
+                    "trending"
+                  ]
+                },
+                "alignment": {
+                  "must_carry_themes_from": [
+                    "10.title",
+                    "12.tags",
+                    "3a.keywords.focus"
+                  ]
+                },
+                "budget_binding": {
+                  "budget_ref_path": "/workflow_patches/steps/0/product_info/ads/daily_budget_usd",
+                  "assume_daily_budget_usd_max": 10
+                }
+              },
+              "outputs_expected": [
+                "ads.groups[3..4]"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/8/constraints"
+                ]
+              }
+            },
+            "8a": {
+              "purpose": "Ads keyword generation (long-tail heavy, negatives, budget-aware)",
+              "constraints": {
+                "inputs_required": [
+                  "ads.groups[]",
+                  "3a.keywords.pool.ranked[]",
+                  "12.tags"
+                ],
+                "per_group_keywords": {
+                  "min": 8,
+                  "max": 12
+                },
+                "match_types_allowed": [
+                  "exact",
+                  "phrase"
+                ],
+                "disallow_broad": true,
+                "long_tail_ratio_min": 0.6,
+                "negatives_required": true,
+                "negatives": {
+                  "generic": [
+                    "gift",
+                    "gift idea",
+                    "trending"
+                  ],
+                  "brand_or_trademark": true,
+                  "cross_negatives_between_groups": true
+                },
+                "alignment": {
+                  "require_core_ngram_from_title": true
+                },
+                "dedupe_similarity_threshold": 0.7,
+                "language": {
+                  "locale": "en-US",
+                  "prevent_all_caps": true
+                },
+                "budget_binding": {
+                  "budget_ref_path": "/workflow_patches/steps/0/product_info/ads/daily_budget_usd",
+                  "assume_daily_budget_usd_max": 10
+                }
+              },
+              "outputs_expected": [
+                "ads.keywords[]",
+                "ads.negatives[]"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/8a/constraints"
+                ],
+                "log": {
+                  "source_mix_breakdown": true,
+                  "alignment_checks": true,
+                  "dedupe_decisions": true
+                }
+              }
+            },
+            "9": {
+              "purpose": "SEO keyword refinement (dedupe, alignment, Ads↔SEO consolidation)",
+              "constraints": {
+                "inputs_required": [
+                  "10.title",
+                  "11.description",
+                  "12.tags",
+                  "ads.keywords"
+                ],
+                "root_repeat_limit": {
+                  "default": 1,
+                  "product_root": 2
+                },
+                "similarity_drop_threshold": 0.7,
+                "long_tail_priority": true,
+                "alignment": {
+                  "title_core_ngram_in_tags": true,
+                  "title_core_ngram_in_ads_keywords": true
+                }
+              },
+              "outputs_expected": [
+                "seo.keywords.refined[]",
+                "seo.drop_log[]"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/9/constraints"
+                ]
+              }
+            },
+            "4a": {
+              "purpose": "Top listings upload (raw intake with relevance gating)",
+              "constraints": {
+                "must_match": {
+                  "product_type": true
+                },
+                "require_one_of": [
+                  "metal_karat_match",
+                  "style_or_motif_match"
+                ],
+                "min_recency_window_days": 90,
+                "price_band_tolerance": 0.3,
+                "similarity": {
+                  "jaccard_min": 0.5,
+                  "cosine_min": 0.6
+                },
+                "forbidden": {
+                  "brand_or_trademark": true,
+                  "generic_spam_terms": [
+                    "gift",
+                    "gift idea",
+                    "trending"
+                  ]
+                },
+                "language": {
+                  "locale": "en-US",
+                  "prevent_all_caps": true
+                },
+                "per_shop_cap": 0.25
+              },
+              "outputs_expected": [
+                "top_products.raw[]"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/4a/constraints"
+                ]
+              }
+            },
+            "4b": {
+              "purpose": "Top listings clean (normalize + dedupe + relevance confirm)",
+              "constraints": {
+                "normalize": [
+                  "lowercase",
+                  "trim",
+                  "collapse_spaces",
+                  "strip_punctuation"
+                ],
+                "dedupe": {
+                  "by_title_and_tags": true
+                },
+                "similarity": {
+                  "jaccard_min": 0.5,
+                  "cosine_min": 0.6
+                },
+                "forbidden": {
+                  "brand_or_trademark": true,
+                  "generic_spam_terms": [
+                    "gift",
+                    "gift idea",
+                    "trending"
+                  ]
+                },
+                "language": {
+                  "locale": "en-US",
+                  "prevent_all_caps": true
+                }
+              },
+              "outputs_expected": [
+                "top_products.clean[]"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/4b/constraints"
+                ]
+              }
+            },
+            "6a": {
+              "purpose": "Competitor analysis (theme extraction + bias control)",
+              "constraints": {
+                "extract_themes": true,
+                "shop_bias_cap": 0.25,
+                "similarity": {
+                  "jaccard_min": 0.5,
+                  "cosine_min": 0.6
+                },
+                "forbidden": {
+                  "brand_or_trademark": true,
+                  "generic_spam_terms": [
+                    "gift",
+                    "gift idea",
+                    "trending"
+                  ]
+                }
+              },
+              "outputs_expected": [
+                "competitors.themes[]",
+                "competitors.bias_report"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/6a/constraints"
+                ]
+              }
+            },
+            "6b": {
+              "purpose": "Competitor listings clean (normalize + dedupe + relevance confirm)",
+              "constraints": {
+                "normalize": [
+                  "lowercase",
+                  "trim",
+                  "collapse_spaces",
+                  "strip_punctuation"
+                ],
+                "dedupe": {
+                  "by_title_and_tags": true
+                },
+                "similarity": {
+                  "jaccard_min": 0.5,
+                  "cosine_min": 0.6
+                },
+                "forbidden": {
+                  "brand_or_trademark": true,
+                  "generic_spam_terms": [
+                    "gift",
+                    "gift idea",
+                    "trending"
+                  ]
+                },
+                "language": {
+                  "locale": "en-US",
+                  "prevent_all_caps": true
+                }
+              },
+              "outputs_expected": [
+                "competitors.clean[]"
+              ],
+              "enforce": {
+                "fail_on_violation": true,
+                "report_paths": [
+                  "/workflow_patches/steps/0a/control_matrix/steps/6b/constraints"
+                ]
+              }
+            },
+            "0a_checks_step0_shipping": {
+              "checks": [
+                {
+                  "path": "context_info.basics.shipping.delivery_time",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "context_info.basics.shipping.free_shipping",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "context_info.basics.shipping.tracking",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "context_info.basics.shipping.packaging.gift_box",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "context_info.basics.shipping.packaging.gift_note",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "context_info.basics.shipping.customs.seller_pays_duties",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "context_info.basics.shipping.target_markets",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_intake_enforcement": {
+              "checks": [
+                {
+                  "path": "workflow_patches.steps.4.constraints.require_csv",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.4.constraints.empty_intake",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.4a.constraints.require_csv",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.4a.constraints.empty_intake",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.4b.constraints.require_csv",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.4b.constraints.empty_intake",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5.constraints.require_csv",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5.constraints.empty_intake",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5a.constraints.require_csv",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5a.constraints.empty_intake",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5b.constraints.require_csv",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5b.constraints.empty_intake",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.6.constraints.require_csv",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.6.constraints.empty_intake",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.6a.constraints.require_csv",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.6a.constraints.empty_intake",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.6b.constraints.require_csv",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.6b.constraints.empty_intake",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_5c_presence": {
+              "checks": [
+                {
+                  "path": "workflow_patches.steps.5c.title",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5c.stop_for_confirmation",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5c.constraints.requires_input_from",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.5c.display_contract",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_registry_lock": {
+              "checks": [
+                {
+                  "path": "workflow_patches.steps_registry_lock",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_vision_schema": {
+              "checks": [
+                {
+                  "path": "workflow_patches.steps.1.constraints.vision_extraction.enabled",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.1.constraints.vision_extraction.supported_fields",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_gift_rule_sync": {
+              "checks": [
+                {
+                  "path": "workflow_patches.steps.4.forbidden",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.4a.forbidden",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.4b.forbidden",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5.forbidden",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5a.forbidden",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.5b.forbidden",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_ui_prefs": {
+              "checks": [
+                {
+                  "path": "_run_order.settings.text_only_preview",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_zero_acceptance": {
+              "checks": [
+                {
+                  "path": "_policy.workflow.guards.zero_acceptance_strategy",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_content_family": {
+              "checks": [
+                {
+                  "path": "workflow_patches.steps.9",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.10",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.11",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "workflow_patches.steps.12",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_preview_settings": {
+              "checks": [
+                {
+                  "path": "_run_order.settings.text_only_preview",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.settings.preview_render.plain_text",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.settings.preview_render.disable_autonumbering",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.settings.preview_render.disable_bullets",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.settings.deterministic_seed",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.settings.session_variance",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            },
+            "0a_checks_step_ui_plain": {
+              "checks": [
+                {
+                  "path": "_run_order.steps.3a.ui_output.force_plain_text",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.3a.ui_output.disable_autonumbering",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.3a.display_contract",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.3b.ui_output.force_plain_text",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.3b.ui_output.disable_autonumbering",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.3b.display_contract",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.10.ui_output.force_plain_text",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.10.ui_output.disable_autonumbering",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.10.display_contract",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.11.ui_output.force_plain_text",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.11.ui_output.disable_autonumbering",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.11.display_contract",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.12.ui_output.force_plain_text",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.12.ui_output.disable_autonumbering",
+                  "required": true,
+                  "fail_on_violation": true
+                },
+                {
+                  "path": "_run_order.steps.12.display_contract",
+                  "required": true,
+                  "fail_on_violation": true
+                }
+              ]
+            }
+          },
+          "enforcement": {
+            "fail_fast": true,
+            "report_paths": [
+              "/workflow_patches/steps/0a/control_matrix",
+              "/_policy/integrity"
+            ],
+            "require_all_steps_have_title": true
+          },
+          "hydration": {
+            "step_titles": "enforced",
+            "sources": [
+              "steps/*",
+              "_run_order/steps/*"
+            ]
+          }
         }
       },
       "1": {
@@ -29967,13 +29967,13 @@
           "require_validations_pass": true,
           "vision_extraction": {
             "enabled": false,
-            "notes": "When enabled, these fields are auto-extracted if vision_conf >= stone_info_policy.threshold; otherwise user_provided preferred.",
             "supported_fields": [
               "stone.type",
               "stone.cut",
               "stone.shape",
               "stone.setting"
-            ]
+            ],
+            "notes": "When enabled, these fields are auto-extracted if vision_conf >= stone_info_policy.threshold; otherwise user_provided preferred."
           }
         },
         "description": "Ürün fotoğrafları ve varsa ürün videosu sisteme yüklenir. Dosya tipleri, çözünürlük ve oran kontrolleri yapılır; başarılı olanlar ürün varlık deposuna kaydedilir.",
@@ -30704,7 +30704,6 @@
         }
       },
       "15": {
-        "description": "SEO focus/support kelimeleri ile Ads pozitif/negatif setlerini senkronize eder, final seti üretir.",
         "kind": "qa",
         "name": "Ads Entegrasyonu & Final Keyword Sync",
         "ruleset": {
@@ -30714,7 +30713,8 @@
           "mode": "warn",
           "note": "QA sadece uyarı üretir, akışı durdurmaz"
         },
-        "title": "QA (Uyarı; akışı durdurmaz)"
+        "title": "QA (Uyarı; akışı durdurmaz)",
+        "description": "SEO focus/support kelimeleri ile Ads pozitif/negatif setlerini senkronize eder, final seti üretir."
       },
       "16": {
         "constraints": {
@@ -30730,35 +30730,6 @@
           ]
         },
         "description": "Önceki adımlardan gelen tüm çıktıları birleştirerek yayına hazır tam ürün listing paketi oluşturur.",
-        "export_contract": {
-          "artifact_name_template": "{channel}.{version}.{date}_{time}.json",
-          "constraints": {
-            "must_confirm": true,
-            "require_user_task": true
-          },
-          "display": {
-            "render_full": true,
-            "sections": [
-              {
-                "bind": "export.filename",
-                "title": "Oluşturulacak Dosya Adı"
-              },
-              {
-                "bind": "export.raw_link",
-                "title": "GitHub Raw Link"
-              },
-              {
-                "static": "Dosyayı indir → Desktop/json-proje klasörüne koy → push-json.bat'ı çalıştırın → ardından Onay'a basın.",
-                "title": "Yapılacak İşlem"
-              }
-            ]
-          },
-          "emit_artifact": true,
-          "outputs": {
-            "export.filename": "{channel}.{version}.{date}_{time}.json",
-            "export.raw_link": "https://raw.githubusercontent.com/mertgs190500/json-proje/main/{channel}.{version}.{date}_{time}.json"
-          }
-        },
         "flow": {
           "guard": {
             "advance_only_if": [
@@ -30885,69 +30856,98 @@
             }
           }
         },
-        "tags": {
-          "channel": "strict"
-        },
         "title": "Final Listing Assembly / Publish Prep",
         "upstream_signature": {
           "policy": "mark_stale_on_upstream_change"
         },
         "validations": {
           "present": true
+        },
+        "export_contract": {
+          "emit_artifact": true,
+          "artifact_name_template": "{channel}.{version}.{date}_{time}.json",
+          "display": {
+            "render_full": true,
+            "sections": [
+              {
+                "title": "Oluşturulacak Dosya Adı",
+                "bind": "export.filename"
+              },
+              {
+                "title": "GitHub Raw Link",
+                "bind": "export.raw_link"
+              },
+              {
+                "title": "Yapılacak İşlem",
+                "static": "Dosyayı indir → Desktop/json-proje klasörüne koy → push-json.bat'ı çalıştırın → ardından Onay'a basın."
+              }
+            ]
+          },
+          "constraints": {
+            "must_confirm": true,
+            "require_user_task": true
+          },
+          "outputs": {
+            "export.filename": "{channel}.{version}.{date}_{time}.json",
+            "export.raw_link": "https://raw.githubusercontent.com/mertgs190500/json-proje/main/{channel}.{version}.{date}_{time}.json"
+          }
+        },
+        "tags": {
+          "channel": "strict"
         }
       },
       "17": {
+        "name": "Post Export: Hash & Zip",
+        "enabled": true,
+        "auto": true,
+        "inputs": {
+          "artifact_filename": "{channel}.{version}.{date}_{time}.json"
+        },
         "actions": {
           "compute_sha256": {
-            "file": "{export.filename}",
             "fn": "sha256",
+            "file": "{export.filename}",
             "out": "steps.17.export.sha256"
           },
           "emit_zip": {
+            "fn": "zip",
             "files": [
               "{export.filename}"
             ],
-            "fn": "zip",
-            "out": "steps.17.export.zip_path",
-            "zip_name": "visible.v{N}.zip"
+            "zip_name": "visible.v{N}.zip",
+            "out": "steps.17.export.zip_path"
           },
           "record_log": {
+            "fn": "append_log",
+            "target": "/_meta/export_log",
             "entry": {
               "event": "export",
+              "version": "{version}",
               "filename": "{export.filename}",
               "sha256": "{steps.17.export.sha256}",
-              "ts": "{now:Europe/Istanbul}",
-              "version": "{version}"
-            },
-            "fn": "append_log",
-            "target": "/_meta/export_log"
+              "ts": "{now:Europe/Istanbul}"
+            }
           }
         },
-        "auto": true,
-        "constraints": {
-          "must_confirm": false,
-          "require_user_task": false
-        },
-        "description": "Listing.final çıktısını Office 2007 uyumlu CSV formatına dönüştürür.",
         "display": {
           "render_full": true,
           "sections": [
             {
-              "bind": "steps.17.export.sha256",
-              "title": "SHA256"
+              "title": "SHA256",
+              "bind": "steps.17.export.sha256"
             },
             {
-              "bind": "steps.17.export.zip_path",
-              "title": "ZIP adı"
+              "title": "ZIP adı",
+              "bind": "steps.17.export.zip_path"
             }
           ]
         },
-        "enabled": true,
-        "inputs": {
-          "artifact_filename": "{channel}.{version}.{date}_{time}.json"
+        "constraints": {
+          "must_confirm": false,
+          "require_user_task": false
         },
-        "name": "Post Export: Hash & Zip",
-        "title": "İlk 5 + Uyumluluk (Unnamed)"
+        "title": "İlk 5 + Uyumluluk (Unnamed)",
+        "description": "Listing.final çıktısını Office 2007 uyumlu CSV formatına dönüştürür."
       },
       "18": {
         "constraints": {
@@ -31103,27 +31103,6 @@
           "must_confirm": true,
           "no_skip": true
         },
-        "display": {
-          "render_full": true,
-          "sections_auto": [
-            {
-              "bind": "decision_at",
-              "title": "Decision At"
-            },
-            {
-              "bind": "decision_by",
-              "title": "Decision By"
-            },
-            {
-              "bind": "publish_go",
-              "title": "Publish Go"
-            },
-            {
-              "bind": "reason_if_no_go",
-              "title": "Reason If No Go"
-            }
-          ]
-        },
         "enabled": false,
         "gates": {
           "must": [
@@ -31142,7 +31121,6 @@
           ]
         },
         "id": "18a",
-        "name": "18a",
         "notes": {
           "lifecycle": "manifest-disabled"
         },
@@ -31180,7 +31158,29 @@
         },
         "validations": {
           "all_prior_ok": true
-        }
+        },
+        "display": {
+          "render_full": true,
+          "sections_auto": [
+            {
+              "title": "Decision At",
+              "bind": "decision_at"
+            },
+            {
+              "title": "Decision By",
+              "bind": "decision_by"
+            },
+            {
+              "title": "Publish Go",
+              "bind": "publish_go"
+            },
+            {
+              "title": "Reason If No Go",
+              "bind": "reason_if_no_go"
+            }
+          ]
+        },
+        "name": "18a"
       },
       "19": {
         "constraints": {
@@ -31459,15 +31459,15 @@
             }
           }
         ],
-        "tags": {
-          "channel": "visible"
-        },
         "title": "Görsel Analiz & SEO Uyumu",
         "upstream_signature": {
           "policy": "mark_stale_on_upstream_change"
         },
         "validations": {
           "present": true
+        },
+        "tags": {
+          "channel": "visible"
         }
       },
       "1b": {
@@ -32348,15 +32348,8 @@
         }
       },
       "3b": {
-        "description": "3.a’daki havuz ve odak #1 (varsayılan) kullanılarak taslak başlık, açıklama ve 13 etiket oluşturulur. Nihai SEO adımlarına geçmeden önce kullanıcı gözden geçirmesi içindir.",
         "kind": "csv_clean:similar",
         "name": "Taslak Başlık / Açıklama (Draft)",
-        "output_format": {
-          "description_outline": "plain_text_lines",
-          "render_preview_hint": "plain_text",
-          "tag_buckets": "json_object",
-          "title_core_ngram": "string"
-        },
         "ruleset": {
           "policy": {
             "add_missing": false,
@@ -32366,7 +32359,14 @@
             "reorder_known": true
           }
         },
-        "title": "Taslak Paket — DRAFT"
+        "title": "Taslak Paket — DRAFT",
+        "description": "3.a’daki havuz ve odak #1 (varsayılan) kullanılarak taslak başlık, açıklama ve 13 etiket oluşturulur. Nihai SEO adımlarına geçmeden önce kullanıcı gözden geçirmesi içindir.",
+        "output_format": {
+          "title_core_ngram": "string",
+          "description_outline": "plain_text_lines",
+          "tag_buckets": "json_object",
+          "render_preview_hint": "plain_text"
+        }
       },
       "3c": {
         "name": "Taslak Zenginleştirme",
@@ -32408,17 +32408,9 @@
             "validations"
           ]
         },
-        "constraints": {
-          "empty_intake": "RUN FAIL",
-          "must_confirm": true,
-          "require_csv": true,
-          "require_user_task": true,
-          "require_validations_pass": true
-        },
-        "description": "Kullanıcıdan gelen 4 dar Top Listings CSV (focus_1..4’e denk gelen, her biri ≈200 ürün) temizlenir, normalize edilir ve konsolide edilir. 3.a odak kelime sırasının revizyonuna dair sinyaller üretilir.",
         "enabled": false,
         "locked": true,
-        "name": "Top Listings Upload (REMOVED)",
+        "name": "Top Listings Upload (REMOVED) (DISABLED)",
         "reactivation_protection": {
           "allowed_fields": [
             "notes"
@@ -32430,19 +32422,24 @@
         "removed_by": "user",
         "removed_reason": "decommissioned by user request",
         "status": "active",
-        "title": "Top Listings (Genel)",
         "tombstone": false,
+        "visible": false,
+        "constraints": {
+          "require_user_task": true,
+          "must_confirm": true,
+          "require_validations_pass": true,
+          "require_csv": false,
+          "empty_intake": "SKIP"
+        },
         "ui": {
           "min_files": 1
         },
-        "visible": false
+        "title": "Top Listings (Genel) (DISABLED)",
+        "description": "Kullanıcıdan gelen 4 dar Top Listings CSV (focus_1..4’e denk gelen, her biri ≈200 ürün) temizlenir, normalize edilir ve konsolide edilir. 3.a odak kelime sırasının revizyonuna dair sinyaller üretilir.",
+        "stop_for_confirmation": false
       },
       "4a": {
-        "constraints": {
-          "empty_intake": "RUN FAIL",
-          "require_csv": true
-        },
-        "name": "4a",
+        "name": "4a (DISABLED)",
         "ruleset": {
           "realign": {
             "if_currency_in_title": true,
@@ -32454,16 +32451,17 @@
           }
         },
         "status": "active",
-        "title": "Top Listings Upload",
-        "tombstone": false
+        "tombstone": false,
+        "title": "Top Listings Upload (DISABLED)",
+        "constraints": {
+          "require_csv": false,
+          "empty_intake": "SKIP"
+        },
+        "stop_for_confirmation": false
       },
       "4b": {
-        "constraints": {
-          "empty_intake": "RUN FAIL",
-          "require_csv": true
-        },
         "kind": "csv_clean:top",
-        "name": "4b",
+        "name": "4b (DISABLED)",
         "ruleset": {
           "policy": {
             "add_missing": false,
@@ -32474,8 +32472,13 @@
           }
         },
         "status": "active",
-        "title": "Top Listings Clean (csv_clean:top)",
-        "tombstone": false
+        "tombstone": false,
+        "title": "Top Listings Clean (csv_clean:top) (DISABLED)",
+        "constraints": {
+          "require_csv": false,
+          "empty_intake": "SKIP"
+        },
+        "stop_for_confirmation": false
       },
       "5": {
         "advisory_pack_similarity": {
@@ -32501,13 +32504,13 @@
           "title": "Similarity & Extra Signals for Top Listings"
         },
         "constraints": {
-          "empty_intake": "RUN FAIL",
           "must_confirm": false,
           "no_skip": true,
-          "require_csv": true,
           "require_gpt_task": false,
           "require_user_task": false,
-          "require_validations_pass": false
+          "require_validations_pass": false,
+          "require_csv": true,
+          "empty_intake": "RUN FAIL"
         },
         "display": {
           "hide": [
@@ -32561,21 +32564,20 @@
         "requires": [
           "4"
         ],
-        "title": "Top Listings Upload (Dar)",
         "upstream_signature": {
           "policy": "mark_stale_on_upstream_change"
         },
         "uses": "analysis/top_listings",
         "validations": {
           "present": true
-        }
+        },
+        "title": "Top Listings Upload (Dar)"
       },
       "5a": {
         "can_revise": [
           "keywords.focus[1..4]"
         ],
         "constraints": {
-          "empty_intake": "RUN FAIL",
           "min_total_rows_warning": 600,
           "must_confirm": false,
           "negatives": [
@@ -32587,10 +32589,11 @@
             "plated*"
           ],
           "no_skip": true,
-          "require_csv": true,
           "require_gpt_task": false,
           "require_user_task": false,
-          "require_validations_pass": false
+          "require_validations_pass": false,
+          "require_csv": true,
+          "empty_intake": "RUN FAIL"
         },
         "description": "Top listings verisinden ürün/anahtar kelime performans içgörüleri çıkarılır; niş fırsatlar ve doygun alanlar işaretlenir; odak sıralaması için sinyal üretilir.",
         "flow": {
@@ -32706,7 +32709,6 @@
       "5b": {
         "constraints": {
           "coverage": "multiple segments must be represented",
-          "empty_intake": "RUN FAIL",
           "exclusions": [
             "brand infringement",
             "supplies/DIY heavy presence"
@@ -32714,10 +32716,11 @@
           "must_confirm": false,
           "no_skip": true,
           "quality": ">=50% of selected shops have multi-match in popular.products.top[]",
-          "require_csv": true,
           "require_gpt_task": false,
           "require_user_task": false,
-          "require_validations_pass": false
+          "require_validations_pass": false,
+          "require_csv": true,
+          "empty_intake": "RUN FAIL"
         },
         "description": "5a ve 4 çıktıları üzerinden hedef rakip mağazalar belirlenir; ileride Ads ve SEO karşılaştırmaları için çekirdek set oluşturulur.",
         "enabled": false,
@@ -32862,30 +32865,18 @@
           "policy": "mark_stale_on_upstream_change"
         }
       },
-      "5c": {
-        "constraints": {
-          "requires_input_from": [
-            "5",
-            "5a",
-            "5b"
-          ]
-        },
-        "description": "Top Listings çıktılarına göre mağaza öneri havuzu (strict/medium/loose).",
-        "stop_for_confirmation": true,
-        "title": "Popular Shops Guard (Top8 öneri)"
-      },
       "6": {
         "artifacts": [
           "competitors.load.report.json"
         ],
         "constraints": {
-          "empty_intake": "RUN FAIL",
           "must_confirm": true,
           "no_skip": true,
-          "require_csv": true,
           "require_gpt_task": false,
           "require_user_task": true,
-          "require_validations_pass": true
+          "require_validations_pass": true,
+          "require_csv": true,
+          "empty_intake": "RUN FAIL"
         },
         "description": "Rakip mağaza listesi CSV’si (örn. competitor_shops.csv) yüklenir; mağaza URL/ID doğrulamaları ve temel temizlik yapılır.",
         "flow": {
@@ -32967,14 +32958,14 @@
           "0a"
         ],
         "title": "Rakip Mağaza CSV Yükleme",
-        "ui": {
-          "min_files": 1
-        },
         "upstream_signature": {
           "policy": "mark_stale_on_upstream_change"
         },
         "validations": {
           "row_min": 1
+        },
+        "ui": {
+          "min_files": 1
         }
       },
       "6a": {
@@ -33013,13 +33004,13 @@
           "competitors.keywords.csv"
         ],
         "constraints": {
-          "empty_intake": "RUN FAIL",
           "must_confirm": false,
           "no_skip": true,
-          "require_csv": true,
           "require_gpt_task": false,
           "require_user_task": false,
-          "require_validations_pass": true
+          "require_validations_pass": true,
+          "require_csv": true,
+          "empty_intake": "RUN FAIL"
         },
         "description": "Yüklenen rakip mağazalar üzerinden ürün/etiket/başlık ve fiyat dağılımı analiz edilir; kampanya/SEO için özet sinyaller üretilir.",
         "display": {
@@ -33145,10 +33136,6 @@
         }
       },
       "6b": {
-        "constraints": {
-          "empty_intake": "RUN FAIL",
-          "require_csv": true
-        },
         "kind": "csv_clean:competitor",
         "name": "6b",
         "ruleset": {
@@ -33171,7 +33158,11 @@
             "reorder_known": true
           }
         },
-        "title": "Competitor Listings Clean (Dedup + Normalize)"
+        "title": "Competitor Listings Clean (Dedup + Normalize)",
+        "constraints": {
+          "require_csv": true,
+          "empty_intake": "RUN FAIL"
+        }
       },
       "7": {
         "constraints": {
@@ -33956,6 +33947,18 @@
         "status": "draft",
         "ui": {
           "hidden": true
+        }
+      },
+      "5c": {
+        "title": "Popular Shops Guard (Top8 öneri)",
+        "description": "Top Listings çıktılarına göre mağaza öneri havuzu (strict/medium/loose).",
+        "stop_for_confirmation": true,
+        "constraints": {
+          "requires_input_from": [
+            "5",
+            "5a",
+            "5b"
+          ]
         }
       }
     },
