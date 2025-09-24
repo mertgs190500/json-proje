@@ -1,48 +1,47 @@
 import json
+import collections.abc
 
-# Define the input and output file paths
-input_filename = 'final_json__ADDONLY_runtime_ref_gate__20250923T064102Z__alias_fix_8a_only.json'
-output_filename = 'cekirdek_kurallar.json'
+def remove_keys_recursive(obj, keys_to_remove):
+    """
+    Recursively remove specified keys from a dictionary or a list of dictionaries.
+    """
+    if isinstance(obj, dict):
+        # Create a new dictionary excluding the keys to remove
+        return {key: remove_keys_recursive(value, keys_to_remove) for key, value in obj.items() if key not in keys_to_remove}
+    elif isinstance(obj, list):
+        # Recursively process each item in the list
+        return [remove_keys_recursive(item, keys_to_remove) for item in obj]
+    else:
+        # Return the object as is if it's not a dict or list
+        return obj
 
-# Keys to remove from the top level
-keys_to_remove = [
-    '_artifacts',
-    '_audit',
-    '_receipts',
-    '_run',
-    'similar_keywords',
-    'top_listings',
-    'patch_log',
-    'changes'
-]
+def main():
+    input_filename = 'cekirdek_kurallar.json'
+    output_filename = 'uretim_cekirdek.json'
 
-# Read the original JSON file
-try:
-    with open(input_filename, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-except FileNotFoundError:
-    print(f"Error: Input file '{input_filename}' not found.")
-    exit(1)
-except json.JSONDecodeError:
-    print(f"Error: Could not decode JSON from '{input_filename}'.")
-    exit(1)
+    # Keys to remove from the entire JSON structure
+    keys_to_remove = {'description', 'notes', 'title', 'label', 'examples', 'example_header', 'example_rows'}
 
-# Remove the specified top-level keys
-for key in keys_to_remove:
-    if key in data:
-        del data[key]
+    try:
+        with open(input_filename, 'r', encoding='utf-8') as f:
+            data = json.load(f)
 
-# Remove the nested '/token_tracking/changes' key
-if '_meta' in data and 'token_tracking' in data['_meta'] and 'changes' in data['_meta']['token_tracking']:
-    del data['_meta']['token_tracking']['changes']
-# The path in the user request was /token_tracking/changes, which might be a top-level key.
-# Let's check for that as well.
-if 'token_tracking' in data and 'changes' in data['token_tracking']:
-    del data['token_tracking']['changes']
+        # Remove specified keys recursively
+        cleaned_data = remove_keys_recursive(data, keys_to_remove)
 
+        # Save the new optimized version
+        with open(output_filename, 'w', encoding='utf-8') as f:
+            # Use separators=(',', ':') for minified output
+            json.dump(cleaned_data, f, ensure_ascii=False, separators=(',', ':'))
 
-# Write the cleaned data to the new file
-with open(output_filename, 'w', encoding='utf-8') as f:
-    json.dump(data, f, indent=2, ensure_ascii=False)
+        print(f"Successfully created optimized file: {output_filename}")
 
-print(f"Successfully created '{output_filename}' by cleaning '{input_filename}'.")
+    except FileNotFoundError:
+        print(f"Error: The file {input_filename} was not found.")
+    except json.JSONDecodeError:
+        print(f"Error: Could not decode JSON from {input_filename}.")
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
+
+if __name__ == "__main__":
+    main()
