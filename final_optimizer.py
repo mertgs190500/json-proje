@@ -3,11 +3,15 @@ import collections
 import hashlib
 from copy import deepcopy
 
-def apply_deduplication(data):
+def get_node_size(node):
+    """Bir JSON düğümünün kompakt dize olarak boyutunu bayt cinsinden hesaplar."""
+    return len(json.dumps(node, separators=(',', ':')))
+
+def apply_profitable_deduplication(data):
     """
-    Tekrar eden tüm nesneleri analiz eder ve referanslarla değiştirir.
+    Yalnızca karlıysa tekrar eden nesneleri referanslarla değiştirir.
     """
-    print("Adım 1: Tekrar Eden Nesneler Referanslanıyor...")
+    print("Adım 1: Kârlı Nesneleri Referanslama...")
 
     structures = collections.defaultdict(list)
 
@@ -34,106 +38,72 @@ def apply_deduplication(data):
     duplicates = {k: v for k, v in structures.items() if len(v) > 1}
 
     if not duplicates:
-        print("  - Tekrar eden nesne bulunamadı.")
+        print("  - Kârlı tekrar eden nesne bulunamadı.")
         return data
 
     if '_defs' not in data:
         data['_defs'] = {}
 
-    # Mevcut def'leri sayarak çakışmayı önle
     def_counter = len(data.get('_defs', {}))
-    # Benzersiz ID'ler için mevcut def ID'lerindeki sayıları bul
-    existing_def_ids = [int(k.split('_')[-1]) for k in data.get('_defs', {}).keys() if k.startswith('def_') and k.split('_')[-1].isdigit()]
-    if existing_def_ids:
-        def_counter = max(existing_def_ids) + 1
-
     replaced_paths = set()
 
     for struct_str, paths in duplicates.items():
         original_obj = json.loads(struct_str)
         num_occurrences = len(paths)
 
+        gain = get_node_size(original_obj) * num_occurrences
+
         def_id = f"def_auto_{def_counter}"
-        def_counter += 1
-
-        print(f"  - {num_occurrences} adet nesne '{def_id}' olarak referanslanıyor.")
         ref_obj = {"$ref": f"#/_defs/{def_id}"}
+        # _defs'e eklenecek tanımın maliyeti. {} hariç, anahtar + ':' + değer.
+        cost_def = len(f'"{def_id}":{json.dumps(original_obj, separators=(",", ":"))}')
 
-        data['_defs'][def_id] = original_obj
+        cost_refs = get_node_size(ref_obj) * num_occurrences
+        cost = cost_def + cost_refs
 
-        for path in paths:
-            if any(path.startswith(p + '/') for p in replaced_paths):
-                continue
+        # Sadece karlı ise optimizasyonu uygula
+        if gain > cost:
+            def_counter += 1
+            print(f"  - Uygulanıyor: {num_occurrences} adet nesne '{def_id}' olarak referanslandı. Kazanç: {(gain - cost) / 1024:.2f} KB")
 
-            parts = path.strip('/').split('/')
-            curr = data
-            try:
-                for part in parts[:-1]:
-                    curr = curr[int(part) if part.isdigit() else part]
+            data['_defs'][def_id] = original_obj
 
-                key = parts[-1]
-                curr[int(key) if key.isdigit() else key] = deepcopy(ref_obj)
-                replaced_paths.add(path)
-            except (KeyError, IndexError, TypeError):
-                continue
+            for path in paths:
+                if any(path.startswith(p + '/') for p in replaced_paths):
+                    continue
+
+                parts = path.strip('/').split('/')
+                curr = data
+                try:
+                    for part in parts[:-1]:
+                        curr = curr[int(part) if part.isdigit() else part]
+
+                    key = parts[-1]
+                    curr[int(key) if key.isdigit() else key] = deepcopy(ref_obj)
+                    replaced_paths.add(path)
+                except (KeyError, IndexError, TypeError):
+                    continue
+
+    if not any(k.startswith("def_auto_") for k in data.get('_defs', {})):
+        if data.get('_defs') == {}:
+            del data['_defs']
+
     return data
-
-def apply_key_shortening(data):
-    """
-    Tüm anahtarları sistematik olarak kısaltır ve bir key_map oluşturur.
-    """
-    print("\nAdım 2: Anahtarlar Kısaltılıyor...")
-    key_map = {}
-    key_counter = 0
-
-    # Önemli not: _defs, audit gibi özel anahtarları kısaltma dışında tutmuyoruz.
-    # Talimat, *tüm* anahtarların kısaltılmasını istiyor.
-
-    def shorten_keys_recursive(obj):
-        nonlocal key_map, key_counter
-        if isinstance(obj, dict):
-            new_obj = {}
-            for k, v in obj.items():
-                if k not in key_map:
-                    new_key = f"k{key_counter}"
-                    key_map[k] = new_key
-                    key_counter += 1
-                else:
-                    new_key = key_map[k]
-                new_obj[new_key] = shorten_keys_recursive(v)
-            return new_obj
-        elif isinstance(obj, list):
-            return [shorten_keys_recursive(item) for item in obj]
-        else:
-            return obj
-
-    shortened_data = shorten_keys_recursive(data)
-
-    # key_map'i tersine çevirerek (kısa -> uzun) dosyaya ekle
-    # Bu, haritanın kendisinin de anahtarlarının kısaltılmasını önler.
-    shortened_data['key_map'] = {v: k for k, v in key_map.items()}
-
-    print(f"  - {len(key_map)} adet benzersiz anahtar kısaltıldı.")
-    return shortened_data
 
 def apply_datatype_optimization(data):
     """
-    Boolean değerleri 1/0'a ve tüm uygun stringleri sayısala dönüştürür.
+    Boolean değerleri 1/0'a ve karlı enumları sayısala dönüştürür.
     """
-    print("\nAdım 3: Veri Tipleri Optimize Ediliyor...")
+    print("\nAdım 2: Veri Tipi Optimizasyonu...")
 
     strings = collections.Counter()
     bool_count = {'true': 0, 'false': 0}
     def value_finder(obj):
-        # key_map ve enum_map'in değerlerini analiz dışında tut
         if isinstance(obj, dict):
-            for k, v in obj.items():
-                if k in ['key_map', 'enum_map']: continue
-                value_finder(v)
+            for v in obj.values(): value_finder(v)
         elif isinstance(obj, list):
             for item in obj: value_finder(item)
         elif isinstance(obj, str):
-            # Enum adayı olabilecek stringleri topla
             if 3 < len(obj) < 50 and obj.replace('_', '').isalnum():
                 strings[obj] += 1
         elif isinstance(obj, bool):
@@ -141,28 +111,35 @@ def apply_datatype_optimization(data):
 
     value_finder(data)
 
-    # Enum'a dönüştürülecek string'leri belirle
-    enums_to_convert = {s: i for i, (s, count) in enumerate(strings.items()) if count > 1}
+    profitable_enums = {}
+    enum_counter = 0
+    for s, count in strings.items():
+        if count > 1:
+            original_size = (len(s) + 2) * count
+            optimized_size = len(str(enum_counter)) * count
+            if original_size > optimized_size:
+                profitable_enums[s] = enum_counter
+                enum_counter += 1
 
-    print(f"  - {len(enums_to_convert)} adet metin türü sayısallaştırılıyor.")
-    print(f"  - {bool_count['true'] + bool_count['false']} adet boolean değeri 1/0'a çevriliyor.")
+    if profitable_enums:
+        print(f"  - {len(profitable_enums)} adet kârlı metin türü sayısallaştırılıyor.")
+    if bool_count['true'] > 0 or bool_count['false'] > 0:
+        print(f"  - {bool_count['true'] + bool_count['false']} adet boolean değeri 1/0'a çevriliyor.")
 
     enum_map = {}
 
-    def optimizer(obj, current_path=""):
+    def optimizer(obj):
         nonlocal enum_map
         if isinstance(obj, dict):
-            # Haritalama objelerinin içine dokunma
-            if current_path in ['/key_map', '/enum_map']:
-                return obj
-            return {k: optimizer(v, f"{current_path}/{k}") for k, v in obj.items()}
+            return {k: optimizer(v) for k, v in obj.items()}
         elif isinstance(obj, list):
-            return [optimizer(item, current_path) for item in obj]
+            return [optimizer(item) for item in obj]
         elif isinstance(obj, bool):
             return 1 if obj else 0
-        elif isinstance(obj, str) and obj in enums_to_convert:
-            enum_map[obj] = enums_to_convert[obj]
-            return enums_to_convert[obj]
+        elif isinstance(obj, str) and obj in profitable_enums:
+            if obj not in enum_map:
+                enum_map[obj] = profitable_enums[obj]
+            return profitable_enums[obj]
         else:
             return obj
 
@@ -175,95 +152,29 @@ def apply_datatype_optimization(data):
 
 
 def optimize_json(input_path, output_path):
-    """JSON dosyasını verilen tüm adımlara göre optimize eder."""
+    """JSON dosyasını hedeflenmiş ve karlı adımlara göre optimize eder."""
     with open(input_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
 
-    # Adım 1: Referanslama
-    data = apply_deduplication(data)
-
-    # Adım 2: Anahtar Kısaltma
-    data = apply_key_shortening(data)
-
-    # Adım 3: Veri Tipi Optimizasyonu
+    data = apply_profitable_deduplication(data)
     data = apply_datatype_optimization(data)
 
-    # Adım 4: Denetim ve Hash Güncellemesi
-    print("\nAdım 4: Denetim Bilgileri ve Hash Güncelleniyor...")
+    print("\nAdım 3: Denetim bilgileri ve hash güncelleniyor...")
+    final_audit = data.pop('audit', {})
 
-    # Adım 4: Denetim ve Hash Güncellemesi
-    print("\nAdım 4: Denetim Bilgileri ve Hash Güncelleniyor...")
+    new_sha256 = hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode('utf-8')).hexdigest()
 
-    # Önce anahtar haritasını alalım, çünkü tüm diğer anahtarları bulmak için ona ihtiyacımız var.
-    key_map_data = data.get('key_map')
-    if not key_map_data:
-        raise ValueError("key_map not found in the data.")
+    if 'integrity_hashes' not in final_audit:
+        final_audit['integrity_hashes'] = {}
+    final_audit['version'] = "11.0.0-machine-optimized"
+    final_audit['description'] = "Machine-readable efficiency. Applied profitable-only optimizations: deduplication and data-type optimization."
+    final_audit['integrity_hashes']['sha256'] = new_sha256
 
-    original_key_map = {v: k for k, v in key_map_data.items()}
-    s_audit = original_key_map.get('audit')
-    if not s_audit:
-        raise ValueError("'audit' key not found in key_map.")
+    data['audit'] = final_audit
 
-    # Hash hesaplaması için verinin bir kopyasını oluştur ve ilgili bölümleri çıkar
-    data_for_hash = deepcopy(data)
-
-    # Haritaları en üst seviyeden kaldır
-    del data_for_hash['key_map']
-    data_for_hash.pop('enum_map', None)
-
-    # Audit bloğunu, nerede olursa olsun, kopyadan kaldır
-    def find_and_remove(obj, key_to_remove):
-        if isinstance(obj, dict):
-            if key_to_remove in obj:
-                del obj[key_to_remove]
-                return True
-            for value in obj.values():
-                if find_and_remove(value, key_to_remove):
-                    return True
-        elif isinstance(obj, list):
-            for item in obj:
-                if find_and_remove(item, key_to_remove):
-                    return True
-        return False
-
-    if not find_and_remove(data_for_hash, s_audit):
-        print("  - Uyarı: Hash hesaplaması için audit bloğu bulunamadı/kaldırılamadı.")
-
-    # Geriye kalan verinin hash'ini hesapla
-    new_sha256 = hashlib.sha256(json.dumps(data_for_hash, sort_keys=True).encode('utf-8')).hexdigest()
-
-    # Şimdi orijinal 'data' objesindeki audit bloğunu bul ve güncelle
-    s_version = original_key_map.get('version', 'version')
-    s_desc = original_key_map.get('description', 'description')
-    s_hashes = original_key_map.get('integrity_hashes', 'integrity_hashes')
-    s_sha256 = original_key_map.get('sha256', 'sha256')
-
-    def find_and_update(obj, key_to_find):
-        if isinstance(obj, dict):
-            if key_to_find in obj:
-                audit_block = obj[key_to_find]
-                audit_block[s_version] = "11.0.0-machine-optimized"
-                audit_block[s_desc] = "Machine-readable efficiency. Applied ALL optimizations: deduplication, key shortening, and data-type optimization as per instructions."
-                if s_hashes not in audit_block:
-                    audit_block[s_hashes] = {}
-                audit_block[s_hashes][s_sha256] = new_sha256
-                return True
-            for value in obj.values():
-                if find_and_update(value, key_to_find):
-                    return True
-        elif isinstance(obj, list):
-            for item in obj:
-                if find_and_update(item, key_to_find):
-                    return True
-        return False
-
-    if not find_and_update(data, s_audit):
-        print("  - Uyarı: Orijinal veride audit bloğu bulunamadı/güncellenemedi.")
-
-    # Son dosyayı kaydet
     print(f"\nOptimizasyon tamamlandı. Dosya '{output_path}' olarak kaydediliyor.")
     with open(output_path, 'w', encoding='utf-8') as f:
-        json.dump(data, f, separators=(',', ':'))
+        json.dump(data, f, separators=(',', ':'), ensure_ascii=False)
 
 if __name__ == "__main__":
     INPUT_FILE = "uretim_cekirdek_v2.json"
