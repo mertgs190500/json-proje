@@ -1,0 +1,352 @@
+{
+  "task_id": "v14_strategic_enhancements_20250928",
+  "target_version": "v13_enhanced",
+  "new_version": "v14_strategic",
+  "description": "Stratejik geliştirmeleri uygula (Etsy SEO, Alura, Ads analizlerine dayanarak). Odak: WQS, Fayda Odaklı Metin, Merkezi Yasaklı Liste, İş Akışı Dallanması (LQS/A/B), Personalar ve Dinamik Politikalar.",
+  "constraints": {
+    "methodology": "NON_DESTRUCTIVE_ENHANCEMENT",
+    "merge_strategy": "Deep merge; prioritize new rules; append to arrays unless specified.",
+    "ref_integrity_check": true
+  },
+  "operations": [
+    {
+      "group": "1. Bilgi Bankası (KB) Kurulumu",
+      "description": "Fayda Odaklı Metin Yazarlığı ve Müşteri Personaları için merkezi KB'ler oluştur (Öneri 2 & 5).",
+      "actions": [
+        {
+          "action": "add_or_merge",
+          "path": "/_kb/feature_to_benefit_dictionary",
+          "value": {
+            "10k_gold": "Dayanıklı ve bütçe dostu; günlük kullanım için mükemmel parlaklık.",
+            "14k_gold": "Kararmaz, hipoalerjeniktir ve nesiller boyu sürecek kalıcı bir yatırımdır (En popüler seçim).",
+            "18k_gold": "Zengin, derin bir renk tonu; en saf ve lüks deneyim.",
+            "handmade": "Her bir parça, sizin için özel olarak ve benzersiz bir dokunuşla özenle üretilmiştir.",
+            "comfort_fit": "Yuvarlatılmış iç kenarlar sayesinde gün boyu rahatsız etmeyen, ipeksi bir kullanım sunar.",
+            "custom_size": "Parmağınıza tam oturacak şekilde özel olarak ölçülendirilir."
+          }
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/_kb/customer_personas",
+          "value": {
+            "Minimalist": {
+              "description": "Sade, zarif ve fonksiyonel tasarımları tercih eder.",
+              "keywords": ["simple", "elegant", "clean", "understated", "modern", "dainty"],
+              "tone": "direct_and_elegant"
+            },
+            "Bohemian": {
+              "description": "Doğal malzemeler, etnik desenler ve özgür ruhlu tasarımları sever.",
+              "keywords": ["boho", "ethnic", "natural", "artisan", "free spirit", "earthy"],
+              "tone": "warm_and_artistic"
+            },
+            "Luxury_Seeker": {
+              "description": "Yüksek karat, prestijli materyaller ve gösterişli tasarımlar arar.",
+              "keywords": ["premium", "high-end", "18k", "statement", "opulent", "heirloom", "investment"],
+              "tone": "sophisticated_and_exclusive"
+            },
+            "Gift_Shopper": {
+              "description": "Anlamlı, kişiselleştirilebilir ve özel günler için hediye arayışındadır.",
+              "keywords": ["personalized", "meaningful", "anniversary", "birthday", "keepsake", "gift for her", "gift for mom"],
+              "tone": "emotional_and_thoughtful"
+            },
+            "General": {
+               "description": "Genel alıcı profili.",
+               "keywords": [],
+               "tone": "neutral_informative"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "group": "2. Dinamik İş Akışı Başlatma (Adım 0)",
+      "description": "Adım 0'a dinamik çalışma modları (LQS/A/B) ve Persona hedefleme seçimi ekle (Öneri 4 & 5).",
+      "actions": [
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/0/i/workflow_config",
+          "description": "Adım 0 girdilerine iş akışı yapılandırma seçenekleri ekleniyor.",
+          "value": {
+            "run_mode_selection": {"type": "enum", "options": ["New_Listing", "LQS_Optimization", "AB_Test_Generation"], "default": "New_Listing"},
+            "target_persona_selection": {"type": "enum", "options": ["Minimalist", "Bohemian", "Luxury_Seeker", "Gift_Shopper", "General"], "default": "Minimalist"}
+          }
+        },
+        {
+          "action": "update_value",
+          "path": "/run/s/0/usr_do",
+          "value": "Ürün/mağaza bilgilerini doğrula. Çalışma Modu (Run Mode) ve Hedef Persona (Target Persona) seç."
+        }
+      ]
+    },
+    {
+      "group": "3. Kalite Ağırlıklı Puanlama (WQS) Uygulaması (Adım 3/3a)",
+      "description": "CSV alımını ve puanlama motorunu, Hacim yerine CR ve CTR'a öncelik verecek şekilde güncelle (Öneri 1).",
+      "actions": [
+        {
+          "action": "add_or_merge",
+          "path": "/pl/csv_ingest/similar_keywords/field_types",
+          "description": "CR/CTR'ın 'percent' olarak ayrıştırılmasını sağla.",
+          "value": {
+            "Conversion Rate": "percent",
+            "CTR": "percent",
+            "Search volume": "int"
+          }
+        },
+        {
+          "action": "update_value",
+          "path": "/pl/csv_ingest/common/converters/percent_to_ratio",
+          "value": true
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/3a/scoring",
+          "description": "WQS formülünü, normalizasyonu ve dinamik ağırlıkları uygula.",
+          "value": {
+            "strategy": "WQS_Normalized",
+            "formula": "WQS = Z(CR)*W_CR + Z(CTR)*W_CTR + Z(Volume)*W_Vol",
+            "normalization_method": "Z-score",
+            "weights_default": {"W_CR": 0.5, "W_CTR": 0.3, "W_Vol": 0.2},
+            "dynamic_weights_source": "/_runtime/modes/policy_switches/active_weights",
+            "fallback_strategy": "LongTail_Relevance_Focus",
+            "fallback_condition": "CR_missing OR CTR_missing"
+          }
+        }
+      ]
+    },
+    {
+      "group": "4. Merkezi Yasaklı Liste (Denylist) Yönetimi",
+      "description": "Negatif anahtar kelimeleri merkezi bir uyumluluk listesinde birleştir (Öneri 3).",
+      "actions": [
+        {
+          "action": "add_or_merge",
+          "path": "/_runtime/compliance/denylist/negative_keywords_master",
+          "value": [
+            "gold plated", "plated", "filled", "vermeil", "DIY", "kit", "supply", "supplies",
+            "cheap", "fake", "faux", "imitation", "tutorial", "how to", "replica", "inspired by"
+          ]
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/10/guards/central_denylist_check",
+          "value": {
+            "ref": "/_runtime/compliance/denylist/negative_keywords_master",
+            "on_hit": "HALT_AND_REPORT",
+            "severity": "critical"
+          }
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/11/guards/central_denylist_check",
+          "value": {
+            "ref": "/_runtime/compliance/denylist/negative_keywords_master",
+            "on_hit": "HALT_AND_REPORT",
+            "severity": "critical"
+          }
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/12/guards/central_denylist_check",
+          "value": {
+            "ref": "/_runtime/compliance/denylist/negative_keywords_master",
+            "on_hit": "HALT_AND_REPORT",
+            "severity": "critical"
+          }
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/8a/guards/central_denylist_check",
+          "value": {
+            "ref": "/_runtime/compliance/denylist/negative_keywords_master",
+            "on_hit": "HALT_AND_REPORT",
+            "severity": "critical"
+          }
+        }
+      ]
+    },
+    {
+      "group": "5. Fayda Odaklı Metin Yazarlığı & Persona Uyumu (Adım 10, 11, 12)",
+      "description": "Fayda odaklı metni zorunlu kıl ve seçilen persona ile uyumu sağla (Öneri 2 & 5).",
+      "actions": [
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/11/rs/enforcement",
+          "value": {
+            "require_benefit_mapping": true,
+            "benefit_dictionary_ref": "/_kb/feature_to_benefit_dictionary",
+            "min_benefits_mentioned": 3
+          }
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/11/guards/benefit_focus_check_nlp",
+          "value": {
+            "enabled": true,
+            "min_score": 0.7,
+            "on_fail": "request_revision",
+            "description": "NLP analysis: Ensures focus on customer benefits over features."
+          }
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/10/rs/alignment/persona_target",
+          "value": {
+            "enabled": true,
+            "source_persona_input": "/run/s/0/i/workflow_config/target_persona_selection",
+            "source_kb": "/_kb/customer_personas",
+            "enforce_persona_keywords": true
+          }
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/11/rs/alignment/persona_target",
+          "value": {
+            "enabled": true,
+            "source_persona_input": "/run/s/0/i/workflow_config/target_persona_selection",
+            "source_kb": "/_kb/customer_personas",
+            "enforce_persona_tone": true
+          }
+        },
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/12/rs/alignment/persona_target",
+          "value": {
+            "enabled": true,
+            "source_persona_input": "/run/s/0/i/workflow_config/target_persona_selection",
+            "source_kb": "/_kb/customer_personas",
+            "prioritize_persona_keywords": true
+          }
+        }
+      ]
+    },
+    {
+      "group": "6. İş Akışı Genişletme (A/B Testi & LQS)",
+      "description": "A/B testi yetenekleri ekle ve Workshop'ta LQS optimizasyon adımlarını tanımla (Öneri 4).",
+      "actions": [
+        {
+          "action": "add_if_not_exists",
+          "path": "/workflow_patches/workshop/backlog/10b_AB_Title",
+          "value": {
+            "id": "10b_AB_Title",
+            "name": "A/B Test Title Generation (Variant B)",
+            "kind": "generate_title",
+            "description": "Generates an alternative 'Title B' based on Step 10 output for A/B testing.",
+            "status": "draft",
+            "enabled": false
+          }
+        },
+        {
+          "action": "add_if_not_exists",
+          "path": "/workflow_patches/workshop/backlog/OPT_1_Ingest",
+          "value": {
+            "id": "OPT_1_Ingest",
+            "name": "LQS Performance Data Ingest",
+            "kind": "ingest_csv",
+            "description": "Uploads historical performance data (Views, Visits, Orders, CR) for an existing listing.",
+            "status": "draft",
+            "enabled": false
+          }
+        },
+        {
+          "action": "add_if_not_exists",
+          "path": "/workflow_patches/workshop/backlog/OPT_2_Diagnosis",
+          "value": {
+            "id": "OPT_2_Diagnosis",
+            "name": "LQS Diagnosis and Prescription",
+            "kind": "analyze_market",
+            "description": "Analyzes data to diagnose LQS issues and prescribes improvements.",
+            "status": "draft",
+            "enabled": false
+          }
+        },
+        {
+          "action": "append_to_list",
+          "path": "/exp/cols",
+          "value": "product.title_variant_b"
+        }
+      ]
+    },
+    {
+      "group": "7. Çapraz Adım Tutarlılığını Katılaştırma (Adım 14)",
+      "description": "Uyum matrisini güçlendirerek 'Aday Kümesi' uyumluluğunu sağla (Öneri 6).",
+      "actions": [
+        {
+          "action": "add_or_merge",
+          "path": "/run/s/14/rs/alignment_matrix_strict",
+          "value": {
+            "description": "Enforces strict consistency across Title, Tags, and Attributes for Etsy Candidate Set Retrieval.",
+            "focus_keyword_source": "/run/s/3a/o/keywords.focus",
+            "required_matches": {
+                "title": {"path": "/run/s/10/o/title.final", "min_matches": 1},
+                "tags": {"path": "/run/s/12/o/tags.final", "min_matches": 3},
+                "attributes": {"path": "/run/s/0/p_info/p_fix", "min_matches": 1}
+            },
+            "on_fail": "HALT_AND_REPORT"
+          }
+        }
+      ]
+    },
+    {
+      "group": "8. Dinamik Politika Anahtarlama & Uzaktan Yapılandırma",
+      "description": "Operasyonel modları tanımla ve uzaktan yapılandırma kaynaklarını etkinleştir (Öneri 7 & 8).",
+      "actions": [
+        {
+          "action": "add_or_merge",
+          "path": "/_runtime/modes/policy_switches",
+          "value": {
+            "active_mode": "High_Conversion_Focus",
+            "active_weights": null,
+            "modes": {
+                "High_Conversion_Focus": {
+                  "description": "Prioritizes CR and CTR heavily. (Uses default weights if override is null)",
+                  "wqs_weights_override": null
+                },
+                "Aggressive_Growth": {
+                  "description": "Balances Volume and Quality for market share growth.",
+                  "wqs_weights_override": {"W_CR": 0.3, "W_CTR": 0.3, "W_Vol": 0.4}
+                }
+            }
+          }
+        },
+        {
+            "action": "add_or_merge",
+            "path": "/_runtime/remote_sources/sources/dynamic_updates",
+            "value": {
+                "dynamic_denylist": {
+                    "description": "Fetches dynamic negative keywords list.",
+                    "url": "https://raw.githubusercontent.com/mertgs190500/json-proje/main/config/dynamic_denylist.json",
+                    "refresh_interval_minutes": 120,
+                    "bind_to": "/_runtime/compliance/denylist/dynamic_seeds"
+                },
+                "seasonal_weights": {
+                    "description": "Fetches seasonal scoring weights.",
+                    "url": "https://raw.githubusercontent.com/mertgs190500/json-proje/main/config/seasonal_weights.json",
+                    "refresh_interval_minutes": 1440,
+                    "bind_to": "/_runtime/calendar_switch/weights"
+                }
+            }
+        }
+      ]
+    },
+    {
+      "group": "9. Sürümleme ve Denetim",
+      "description": "Değişiklikleri yansıtmak için meta verileri güncelle.",
+      "actions": [
+        {
+          "action": "update_value",
+          "path": "/mt/schema_version",
+          "value": "v14-Strategic"
+        },
+        {
+          "action": "append_to_list",
+          "path": "/mt/chg",
+          "value": {
+            "id": "chg-20250928-v14-strategic-rollout",
+            "by": "DeepThink_Planner/Jules_Executor",
+            "ts": "2025-09-28T05:18:35Z",
+            "summary": "Implemented 8 strategic enhancements: WQS (Rec1), Benefit-Focus (Rec2), Central Denylist (Rec3), Workflow Branching LQS/AB (Rec4/5), Personas (Rec5), Strict Consistency (Rec6), Dynamic Policies (Rec7), Remote Config (Rec8)."
+          }
+        }
+      ]
+    }
+  ]
+}
