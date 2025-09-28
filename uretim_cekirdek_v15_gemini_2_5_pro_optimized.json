@@ -1,0 +1,564 @@
+{
+    "bk": {
+        "rolling": []
+    },
+    "m": {
+        "f": {
+            "auto_backup": true,
+            "drift_alarm": true,
+            "immutable_core": true
+        },
+        "pv": 1
+    },
+    "p": {
+        "av": "timestamped",
+        "seed": 1337,
+        "f_f_ow": true,
+        "f_s_d": true,
+        "no_m_d": true,
+        "req_chg": true,
+        "timezone": "Europe/Istanbul"
+    },
+    "r": {
+        "d_no_s": true,
+        "d_req_p": "hard",
+        "no_s_s": true,
+        "res_only": true,
+        "stop_err": true,
+        "strict_o": true
+    },
+    "adm": {
+        "unlock": {
+            "app_at": "2025-09-09T18:09:16.385761Z",
+            "rat": "SEO rules, Ads optimization and A/B testing revamp per references (Etsy Ads, Alura metrics, SEO guide).",
+            "req_steps": [
+                "10",
+                "11",
+                "14",
+                "15"
+            ],
+            "status": "approved"
+        }
+    },
+    "bs": {
+        "on_l": {
+            "b_txt": "Welcome back 👋\n- Required user checkpoints: Step 0 (Product Info), Media Upload, CSV uploads (3/4/6), Record Type decision (16).\n- CSV schemas are defined under /_policy/csv_ingest/* (strict headers).\n- Current mode: preview (learning mode). Export (Step 17) is ENABLED.\n- Resume point → last: 16, next: 18. Use checkpoints at 16 & 18 to review/fix.\n",
+            "s_ban": true
+        },
+        "flags": {
+            "step17_enabled": true
+        }
+    },
+    "cmd": {
+        "allow": [
+            "ONAY",
+            "DÜZELT",
+            "YÜKLE",
+            "DEVAM",
+            "DUR"
+        ],
+        "ds": {
+            "DEVAM": "Bekleyen adımı çalıştırır, sonraki durakta durur.",
+            "DUR": "Koşuyu güvenli biçimde durdurur (durum raporu verilir).",
+            "DÜZELT": "Gösterilen metni/detayı belirtilen şekilde düzeltir (run-time, JSON'a yazılmaz).",
+            "ONAY": "Gösterilen adımı bu haliyle onaylar ve bir sonrakine geçer.",
+            "YÜKLE": "İstenen dosyayı yükler (görseller/CSV vb., run-time)."
+        }
+    },
+    "csv": {
+        "competitor_csv": {
+            "hdrs": {
+                "$ref": "#/_defs/def_8e6c405a"
+            },
+            "pre": {
+                "dedupe_on": [
+                    "URL"
+                ],
+                "delimiter_probe": [
+                    ",",
+                    ";",
+                    "\t",
+                    "|"
+                ],
+                "drop_extras": false,
+                "encoding": [
+                    "utf-8",
+                    "utf-8-sig",
+                    "latin-1"
+                ],
+                "header_canonical": true,
+                "o": {
+                    "clean": "/runtime/csv/competitor_clean.csv",
+                    "corrected": "/runtime/csv/competitor_corrected.csv",
+                    "log": "/runtime/reports/competitor_prepare"
+                },
+                "semantic_soft_repair": {
+                    "Shop": {
+                        "must_contain_alpha": true
+                    },
+                    "Title": {
+                        "must_contain_alpha": true
+                    },
+                    "URL": {
+                        "must_contain_http": true
+                    }
+                }
+            },
+            "req": [
+                "Title",
+                "URL",
+                "Shop"
+            ],
+            "expected_headers_strict": false,
+            "preprocess_overrides": {
+                "Keyword": {
+                    "forbid_all_numeric": false
+                }
+            }
+        },
+        "popular_listings": {
+            "hdrs": {
+                "$ref": "#/_defs/def_af3da152"
+            },
+            "pre": {
+                "dedupe_on": [
+                    "URL"
+                ],
+                "delimiter_probe": [
+                    ",",
+                    ";",
+                    "\t",
+                    "|"
+                ],
+                "drop_extras": false,
+                "encoding": [
+                    "utf-8",
+                    "utf-8-sig",
+                    "latin-1"
+                ],
+                "header_canonical": true,
+                "o": {
+                    "clean": "/runtime/csv/top_listings_dar_clean.csv",
+                    "corrected": "/runtime/csv/top_listings_dar_corrected.csv",
+                    "log": "/runtime/reports/top_listings_prepare"
+                },
+                "semantic_soft_repair": {
+                    "Title": {
+                        "must_contain_alpha": true
+                    },
+                    "URL": {
+                        "must_contain_http": true
+                    }
+                }
+            },
+            "req": [
+                "Title",
+                "URL",
+                "Shop"
+            ],
+            "expected_headers_strict": false,
+            "preprocess_overrides": {
+                "Keyword": {
+                    "forbid_all_numeric": false
+                }
+            }
+        },
+        "similar_keywords": {
+            "hdrs": {
+                "$ref": "#/_defs/def_d1bfff13"
+            },
+            "pre": {
+                "dedupe_on": [
+                    "Keyword"
+                ],
+                "delimiter_probe": [
+                    ",",
+                    ";",
+                    "\t",
+                    "|"
+                ],
+                "drop_extras": false,
+                "encoding": [
+                    "utf-8",
+                    "utf-8-sig",
+                    "latin-1"
+                ],
+                "header_canonical": true,
+                "o": {
+                    "clean": "/runtime/csv/similar_keywords_clean.csv",
+                    "corrected": "/runtime/csv/similar_keywords_corrected_merged.csv",
+                    "log": "/runtime/reports/similar_prepare"
+                },
+                "semantic_soft_repair": {
+                    "3mo. change": {
+                        "percent_like": true
+                    },
+                    "Keyword": {
+                        "forbid_all_numeric": true,
+                        "must_contain_alpha": true,
+                        "repair_from": [
+                            "Competition level",
+                            "Etsy tag"
+                        ]
+                    },
+                    "Listing age": {
+                        "days_like": true
+                    },
+                    "Long-tail keyword": {
+                        "enum_like": [
+                            "Yes",
+                            "No"
+                        ]
+                    },
+                    "Search volume": {
+                        "number_like": true
+                    }
+                }
+            },
+            "req": [
+                "Keyword"
+            ],
+            "expected_headers_strict": false,
+            "preprocess_overrides": {
+                "Keyword": {
+                    "forbid_all_numeric": false
+                }
+            }
+        },
+        "top_listings_csv": {},
+        "competitor_shops_csv": {},
+        "similar_keywords_csv": {},
+        "similar_keywords_v2": {
+            "id": "similar_keywords_v2",
+            "parse": {
+                "$ref": "#/_defs/def_3183d32d"
+            },
+            "pre": {
+                "$ref": "#/_defs/def_77c89c3a"
+            },
+            "hdrs": {
+                "$ref": "#/_defs/def_d1bfff13"
+            },
+            "header_aliases": {
+                "$ref": "#/_defs/def_fe8992e9"
+            },
+            "preprocess_overrides": {
+                "Keyword": {
+                    "forbid_all_numeric": true
+                }
+            },
+            "v": {
+                "required_columns_any_of": [
+                    [
+                        "Keyword"
+                    ]
+                ],
+                "row_length_equals_header": {
+                    "on_f": "halt",
+                    "report_first_n": 50
+                },
+                "keyword_has_letters_min_ratio": {
+                    "min_ratio": 0.2,
+                    "sample_n": 1000,
+                    "on_f": "halt",
+                    "explain": "Harf içeren Keyword oranı çok düşük; veri muhtemelen ID/kod içeriyor."
+                }
+            },
+            "o": {
+                "frame_name": "similar_keywords_norm_v2",
+                "canonical_headers": {
+                    "$ref": "#/_defs/def_d1bfff13"
+                }
+            }
+        },
+        "similar_keywords_strict": {
+            "id": "similar_keywords_strict",
+            "parse": {
+                "$ref": "#/_defs/def_3183d32d"
+            },
+            "pre": {
+                "$ref": "#/_defs/def_77c89c3a"
+            },
+            "hdrs": {
+                "$ref": "#/_defs/def_d1bfff13"
+            },
+            "header_aliases": {
+                "$ref": "#/_defs/def_fe8992e9"
+            },
+            "v": {
+                "required_columns_any_of": [
+                    [
+                        "Keyword"
+                    ]
+                ],
+                "row_length_equals_header": {
+                    "on_f": "halt",
+                    "report_first_n": 50
+                }
+            },
+            "o": {
+                "frame_name": "similar_keywords_norm"
+            }
+        },
+        "top_listings_title_first_v1": {
+            "id": "top_listings_title_first_v1",
+            "parse": {
+                "$ref": "#/_defs/def_c68cdea9"
+            },
+            "pre": {
+                "$ref": "#/_defs/def_77c89c3a"
+            },
+            "hdrs": {
+                "$ref": "#/_defs/def_af3da152"
+            },
+            "v": {
+                "$ref": "#/_defs/def_c92d0b46"
+            },
+            "o": {
+                "frame_name": "top_listings_norm"
+            }
+        },
+        "listings_title_first_v1": {
+            "id": "listings_title_first_v1",
+            "parse": {
+                "$ref": "#/_defs/def_c68cdea9"
+            },
+            "pre": {
+                "$ref": "#/_defs/def_77c89c3a"
+            },
+            "hdrs": {
+                "$ref": "#/_defs/def_8e6c405a"
+            },
+            "v": {
+                "$ref": "#/_defs/def_c92d0b46"
+            },
+            "o": {
+                "frame_name": "listings_norm"
+            }
+        }
+    },
+    "exp": {
+        "cols": [
+            "record_id",
+            "op_type",
+            "is_deleted",
+            "product.title",
+            "product.description",
+            "product.tags",
+            "pricing.price_value",
+            "pricing.price_currency",
+            "image_1",
+            "image_2",
+            "image_3",
+            "image_4",
+            "image_5"
+        ],
+        "fail_on_missing": true,
+        "format": "csv"
+    },
+    "fs": {
+        "cr_at": "2025-09-08 08:06:53",
+        "diff_j": {
+            "en": true,
+            "pattern": "PATCH_%Y%m%d_%H%M%S.diff.json"
+        },
+        "rt_p": {
+            "recovery_file": "RECOVERY.txt",
+            "run_state_file": "RUN_STATE.json"
+        },
+        "schema_v": {
+            "en": true,
+            "fail_on_invalid": true,
+            "schema_ref": "internal://schemas/finalset.schema.json"
+        },
+        "lock": "62a2a41add954df2619f9a675112566ae1d12b1edefe36b431d1d5b711f79cfd",
+        "sot": "FINALSET__RESULT_ONLY__20250907_161225__CLEANED.json",
+        "ver": {
+            "en": true,
+            "pattern": "FINALSET__%Y%m%d_%H%M__v{N}__{sha12}.json"
+        },
+        "w_mode": {
+            "req_ua": true,
+            "typ": "copy_only"
+        }
+    },
+    "h": {
+        "admin": {
+            "restore_flow": [
+                "Önce /_policy/audit/steps_snapshots listesinden snapshot id seç.",
+                "Talimat ver: 'restore steps from <snapshot_id>' — ben steps + manifest'i o fotoğrafa geri alırım.",
+                "Geri alma da audit'e işlenir."
+            ],
+            "unlock_flow": [
+                "JSON'a şu alanı doldur: /_admin/unlock_request = {status:'request', requested_steps:['<id>','...'], rationale:'neden'}",
+                "Ben onaylayınca ilgili /workflow_patches/steps_locks/<id>/locked=false yapılır.",
+                "Düzenleme bittiğinde yeniden lock=true yapılır."
+            ]
+        },
+        "assets": {
+            "visual_examples": {
+                "chk": [
+                    "Min 5 görsel (studio,lifestyle,scale,detail,packaging)",
+                    "BOM yok; EXIF zorunlu değil; çözünürlük ≥ 1500px",
+                    "Aşırı watermark yok; yanıltıcı taş bilgisi yok"
+                ],
+                "file_naming": {
+                    "pattern": "ring_<type>_<view>_<index>.jpg"
+                },
+                "guides": {
+                    "detail": [
+                        "Yüzey dokusu (hammered/polish) yakın plan",
+                        "Kenarlarda comfort-fit formu görünmeli",
+                        "Lehim/ek yerleri temizliği kontrol"
+                    ],
+                    "lifestyle": [
+                        "Elde/parmakta kullanım; ölçü algısı",
+                        "Günlük ışık; aşırı filtre yok",
+                        "Takı kombinasyonu (stacking) gösterimi"
+                    ],
+                    "packaging": [
+                        "Özel kutu + hediye notu opsiyonu kadrajda",
+                        "Kargo paket bütünlüğü (yastıklama)",
+                        "Markasız/markalı görünüm tercihi net"
+                    ],
+                    "scale": [
+                        "Cetvel/halka ölçer ile mm/mm gösterimi",
+                        "US size kartı ile boyut referansı",
+                        "Genişlik ve kalınlık notu (metin katmanı)"
+                    ],
+                    "studio": [
+                        "Düz arka plan (tercihen açık, gölge yumuşak)",
+                        "Ön-arka-yan açı; parlama kontrolü",
+                        "Yüksek çözünürlük, net odak (ring/band yüzeyi)"
+                    ]
+                },
+                "required_types": {
+                    "$ref": "#/_defs/def_c45f607a"
+                }
+            }
+        },
+        "authoring": {
+            "how_to_add": [
+                "workshop.bulk_add.pending_names listesine isimleri ekle.",
+                "Her isim için kind (registry/step_kinds) seç.",
+                "status='ready' yap ve promote et (promotion.strategy=manual_confirm)."
+            ],
+            "how_to_promote": [
+                "Promote onayı ile backlog → steps kopyalanır.",
+                "enabled=false gelir; manifest'e ekleme opsiyoneldir.",
+                "manifest'e eklersen yürütme sırasına girer."
+            ],
+            "safety": [
+                "Learning/preview modunda export yine kapalı.",
+                "digest_only=true; publish akışı etkilenmez."
+            ]
+        },
+        "s": {
+            "0": {
+                "checks": [
+                    "Eksik/kritik alan yok"
+                ],
+                "i": [
+                    "/product_record",
+                    "/shop_profile"
+                ],
+                "o": [
+                    "Kanıtlanmış ürün/mağaza profili"
+                ],
+                "usr_do": "Ürün/mağaza bilgilerini doğrula (read-only).",
+                "gemini_do": "Gemini, bu adımda `/product_record` ve `/shop_profile` altındaki tüm verileri dikkatlice oku. Bu bilgiler, tüm iş akışı boyunca tutarlılığı sağlamak için referans alınacak temel doğruluk kaynağıdır. Özellikle ürün özellikleri, fiyatlandırma ve mağaza politikaları gibi kritik verileri hafızanda tut."
+            },
+            "16": {
+                "checks": [
+                    "All constraints pass; media çeşitliliği uyarı olabilir"
+                ],
+                "i": [
+                    "title/desc/tags + shop profile"
+                ],
+                "o": [
+                    "listing.assembled (digest)"
+                ],
+                "usr_do": "Record Type seç → publish/draft/preview.",
+                "gemini_do": "Gemini, bu kritik adımda, kullanıcı tarafından seçilen kayıt türüne (`publish`, `draft`, veya `preview`) göre son birleştirme işlemini yap. Tüm önceki adımlardan gelen verileri (başlık, açıklama, etiketler, medya, vb.) bir araya getirerek `listing.assembled` adlı bir digest oluştur. Bu süreçte, `/_policy/workflow_enforcement/rules/correction_checkpoints` altında tanımlanan son kontrollere göre 'soft' (engelleyici olmayan) uyumsuzlukları (örneğin, medya çeşitliliğindeki eksiklikler) tespit et ve kullanıcıya bir uyarı olarak sun. Bu, yayınlama öncesi son düzeltme fırsatıdır."
+            },
+            "17": {
+                "checks": [
+                    "Learning mode’da guard ile kapalı"
+                ],
+                "i": [
+                    "record_type=publish"
+                ],
+                "o": [
+                    "CSV/XLSX/JSON"
+                ],
+                "usr_do": "—",
+                "gemini_do": "Export (publish gerekli)."
+            },
+            "18": {
+                "checks": [
+                    "checkpoint 18: fix-or-continue"
+                ],
+                "i": [
+                    "assembled listing"
+                ],
+                "o": [
+                    "pre-publish report"
+                ],
+                "usr_do": "Gerekirse düzeltmeleri onayla.",
+                "gemini_do": "Publish öncesi kontrolleri çalıştırır."
+            },
+            "1a": {
+                "checks": [
+                    "Min 5 tür görsel; BOM yok, okunabilir"
+                ],
+                "i": [
+                    "images/*"
+                ],
+                "o": [
+                    "media.manifest"
+                ],
+                "usr_do": "Görselleri yükle.",
+                "gemini_do": "Gemini, yüklenen tüm görselleri analiz et. Her bir görselin `/_help/assets/visual_examples/guides` altında belirtilen stüdyo, lifestyle, ölçek, detay ve paketleme gibi kategorilere uygunluğunu değerlendir. Görsel kalite kontrolü (QC) yaparken, özellikle çözünürlük, netlik, aydınlatma ve arkaplan temizliği gibi temel kriterleri göz önünde bulundur. Eksik veya zayıf olan görsel türlerini belirleyerek bir sonraki adımda (öneri oluşturma) kullanılmak üzere not al."
+            },
+            "3": {
+                "checks": [
+                    "Header birebir; EOL LF/CRLF OK; BOM yok"
+                ],
+                "i": [
+                    "/_policy/csv_ingest/similar_keywords"
+                ],
+                "o": [
+                    "keywords.pool.ranked[]"
+                ],
+                "usr_do": "Similar Keywords CSV’yi yükle (strict header).",
+                "gemini_do": "Gemini, yüklenen 'Similar Keywords' CSV dosyasını `/_policy/csv_ingest/similar_keywords` kurallarına göre işle. 'Keyword' sütununu temel alarak tüm satırları tekilleştir (deduplication). Metin normalizasyonu (küçük harfe çevirme, boşlukları temizleme) ve anlamsal temizlik (örneğin, tamamen sayısal olan anlamsız anahtar kelimeleri eleme) uygula. Sonuç olarak, sıralanmış ve temizlenmiş bir anahtar kelime havuzu (`keywords.pool.ranked[]`) oluştur."
+            },
+            "4": {
+                "checks": [
+                    "Money/% alan dönüşümü; header birebir"
+                ],
+                "i": [
+                    "/_policy/csv_ingest/top_listings"
+                ],
+                "o": [
+                    "toplistings.normalized"
+                ],
+                "usr_do": "Top Listings CSV’yi yükle.",
+                "gemini_do": "Gemini, 'Top Listings' CSV dosyasını `/_policy/csv_ingest/top_listings` kurallarına göre işle. Veri temizliği ve normalizasyonu uygula; özellikle para birimi, yüzde ve sayısal alanların doğru formatlandığından emin ol. Satırları tekilleştirirken öncelikli olarak 'URL' sütununu kullan; eğer 'URL' boş veya geçersiz ise 'Title' sütununu fallback olarak kullan. Bu işlemle `toplistings.normalized` adlı temiz bir veri çerçevesi oluştur."
+            },
+            "6": {
+                "checks": [
+                    "Shop numeric değil; header strict"
+                ],
+                "i": [
+                    "/_policy/csv_ingest/competitor_listings"
+                ],
+                "o": [
+                    "competitors.normalized"
+                ],
+                "usr_do": "Competitor Listings CSV’yi yükle.",
+                "gemini_do": "Gemini, 'Competitor Listings' CSV'sini `/_policy/csv_ingest/competitor_listings` kurallarına göre işle. 'Shop' sütununun sayısal olmadığından emin ol. Veriyi 'ring' veya 'band' anahtar kelimelerini içerecek şekilde filtrele. Satırları 'URL' bazında tekilleştirerek `competitors.normalized` adlı temiz bir veri çerçevesi oluştur. Bu veri, rakip analizinin temelini oluşturacaktır."
+            }
+        }
+    }
+}
