@@ -1,0 +1,73 @@
+{
+    "3c": {
+        "n": "Taslak Zenginleştirme",
+        "requires": ["3b"],
+        "rs": { "note": "Taslak zenginleştirme kuralları burada yer alacak." },
+        "o": ["draft.enriched{}"],
+        "c": { "must_confirm": false, "no_skip": true },
+        "g": { "$ref": "#/_defs/def_3c0a72ea" },
+        "up_sig": { "pol": "mark_stale_on_upstream_change" },
+        "v": { "present": true },
+        "await_u": true, "require_user_confirm": true, "no_skip": true
+    },
+    "5c": {
+        "n": "Rakip Mağaza Önerileri (8)",
+        "requires": ["5a"],
+        "rs": { "note": "Rakip mağaza öneri kuralları burada yer alacak." },
+        "o": ["competitors.suggested_shops[]"],
+        "c": { "must_confirm": true, "no_skip": true },
+        "g": { "$ref": "#/_defs/def_3c0a72ea" },
+        "up_sig": { "pol": "mark_stale_on_upstream_change" },
+        "v": { "present": true },
+        "await_u": true, "require_user_confirm": true, "no_skip": true, "stop_for_confirmation": true
+    },
+    "6b": {
+        "n": "Competitor Listings Clean",
+        "kind": "csv_clean:competitor",
+        "requires": ["6a"],
+        "rs": {
+            "pol": {
+                "$ref": "#/_defs/def_15ad873a"
+            }
+        },
+        "o": ["competitors.clean[]"],
+        "c": { "require_csv": true, "empty_intake": "RUN FAIL" },
+        "g": { "$ref": "#/_defs/def_3c0a72ea" },
+        "up_sig": { "pol": "mark_stale_on_upstream_change" },
+        "v": { "present": true },
+        "await_u": true, "require_user_confirm": true, "no_skip": true
+    },
+    "8B": {
+        "n": "Ads Sync – Positive Set",
+        "requires": ["8a"],
+        "rs": { "note": "Pozitif reklam anahtar kelimeleri senkronizasyon kuralları." },
+        "o": ["ads_sync.final_positive[]"],
+        "c": { "must_confirm": false, "no_skip": true },
+        "g": { "$ref": "#/_defs/def_7ed1b523" },
+        "up_sig": { "pol": "mark_stale_on_upstream_change" },
+        "v": { "present": true },
+        "await_u": true, "require_user_confirm": true, "no_skip": true
+    },
+    "8C": {
+        "n": "Ads Sync – Negative Set",
+        "requires": ["8B"],
+        "rs": { "note": "Negatif reklam anahtar kelimeleri senkronizasyon kuralları." },
+        "o": ["ads_sync.final_negative[]", "ads_sync.status"],
+        "c": { "must_confirm": false, "no_skip": true },
+        "g": { "$ref": "#/_defs/def_7ed1b523" },
+        "up_sig": { "pol": "mark_stale_on_upstream_change" },
+        "v": { "present": true },
+        "await_u": true, "require_user_confirm": true, "no_skip": true
+    },
+    "12a": {
+        "n": "Nitelik Seçimi & Bonus Etiket Eşleme",
+        "requires": ["12"],
+        "rs": { "note": "Nitelik seçimi ve etiket eşleme kuralları." },
+        "o": ["attributes.selected{}", "attribute_to_tag_saving.map{}"],
+        "c": { "must_confirm": false, "no_skip": true },
+        "g": { "$ref": "#/_defs/def_7ed1b523" },
+        "up_sig": { "pol": "mark_stale_on_upstream_change" },
+        "v": { "present": true },
+        "await_u": true, "require_user_confirm": true, "no_skip": true
+    }
+}
