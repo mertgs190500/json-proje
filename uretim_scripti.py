@@ -6,6 +6,8 @@ import google.generativeai as genai
 import dotenv
 import pandas as pd
 from PIL import Image
+import hashlib
+import sys
 
 # --- FAZ 1: KURULUM VE YARDIMCI FONKSİYONLAR ---
 
@@ -15,6 +17,42 @@ MODEL_FIYATLARI_USD = {
     "gemini-2.5-flash": {"input": 0.35, "output": 1.05}
 }
 USD_TO_TRY_KURU = 43.0
+
+def verify_json_integrity(filepath):
+    """
+    Verilen JSON dosyasının SHA256 hash'ini hesaplar ve dosya içindeki
+    beklenen hash ile karşılaştırarak bütünlüğünü doğrular.
+    """
+    try:
+        with open(filepath, 'rb') as f:
+            file_bytes = f.read()
+        calculated_hash = hashlib.sha256(file_bytes).hexdigest()
+
+        # Dosya içeriğini tekrar decode edip JSON olarak parse et
+        config_data = json.loads(file_bytes.decode('utf-8'))
+
+        expected_hash = config_data.get("sg", {}).get("expected_sha256")
+
+        if not expected_hash:
+            print(f"HATA: '{filepath}' içinde beklenen SHA256 hash'i (/sg/expected_sha256) bulunamadı.")
+            logging.error(f"'{filepath}' içinde beklenen SHA256 hash'i bulunamadı.")
+            return None
+
+        if calculated_hash == expected_hash:
+            logging.info(f"'{filepath}' bütünlük kontrolünü geçti. Hash'ler eşleşiyor.")
+            return config_data
+        else:
+            print("--- GÜVENLİK UYARISI: BÜTÜNLÜK ---")
+            print(f"HATA: '{filepath}' dosyasının bütünlüğü doğrulanamadı.")
+            print(f"Hesaplanan SHA256: {calculated_hash}")
+            print(f"Beklenen SHA256:   {expected_hash}")
+            logging.critical(f"BÜTÜNLÜK HATASI: '{filepath}'. Hesaplanan: {calculated_hash}, Beklenen: {expected_hash}")
+            return None
+
+    except Exception as e:
+        print(f"HATA: Bütünlük kontrolü sırasında beklenmedik bir hata oluştu: {e}")
+        logging.error(f"Bütünlük kontrolü hatası: {e}")
+        return None
 
 def kurulum_ve_yapilandirma():
     """Script başladığında gerekli tüm yapılandırmaları ve dosyaları yükler."""
@@ -32,48 +70,103 @@ def kurulum_ve_yapilandirma():
     except Exception as e:
         logging.error(f"Gemini API yapılandırılamadı: {e}")
         return None, None
+
     config_dosya_adi = "uretim_cekirdek_v15_revised.json"
-    try:
-        with open(config_dosya_adi, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-        logging.info(f"'{config_dosya_adi}' başarıyla yüklendi.")
-        print(f"-> Üretim planı ('{config_dosya_adi}') başarıyla yüklendi.")
-    except Exception as e:
-        logging.error(f"Üretim planı dosyası okunurken hata: {e}")
-        return None, None
+
+    print(f"-> Üretim planı ('{config_dosya_adi}') yükleniyor ve doğrulanıyor...")
+    config = verify_json_integrity(config_dosya_adi)
+
+    if not config:
+        print("-> Bütünlük kontrolü başarısız olduğu için işlem durduruldu.")
+        sys.exit(1) # Hata durumunda script'i sonlandır
+
+    print(f"-> Üretim planı başarıyla yüklendi ve doğrulandı.")
+    logging.info(f"'{config_dosya_adi}' başarıyla yüklendi ve doğrulandı.")
+
     return config, api_key
 
 def durum_yonetimi(config, adim_id=None, uretim_verileri=None, mod='yaz'):
-    """RUN_STATE.json dosyasını okur veya yazar."""
-    state_file_path = config.get("fs", {}).get("rt_p", {}).get("run_state_file", "RUN_STATE.json")
+    """
+    Durum dosyasını (RUN_STATE.json) yönetir. Veri küçülme koruması içerir ve
+    Pandas DataFrame'lerini JSON formatına dönüştürür/okur.
+    """
+    state_filepath = config.get("fs", {}).get("rt_p", {}).get("run_state_file", "RUN_STATE.json")
+
     if mod == 'oku':
         try:
-            with open(state_file_path, 'r', encoding='utf-8') as f:
+            with open(state_filepath, 'r', encoding='utf-8') as f:
                 state = json.load(f)
-                son_adim_id = state.get("last_completed_step_id")
-                veriler = state.get("uretim_verileri", {})
-                logging.info(f"Durum dosyası bulundu. Son tamamlanan adım: {son_adim_id}")
-                print(f"-> Durum dosyası bulundu. Kaldığı yerden devam edilecek. Son adım: {son_adim_id}")
-                for key, value in veriler.items():
-                    if isinstance(value, str) and '{"columns":' in value and ',"index":' in value:
-                        try:
-                            veriler[key] = pd.read_json(value, orient='split')
-                        except Exception:
-                            continue
-                return son_adim_id, veriler
-        except FileNotFoundError:
+            son_adim_id = state.get("last_completed_step_id")
+            veriler = state.get("uretim_verileri", {})
+            logging.info(f"Durum dosyası bulundu. Son tamamlanan adım: {son_adim_id}")
+            print(f"-> Durum dosyası bulundu. Kaldığı yerden devam edilecek. Son adım: {son_adim_id}")
+            # Pandas DataFrame'leri geri yükle
+            for key, value in veriler.items():
+                if isinstance(value, str) and '{"columns":' in value and ',"index":' in value:
+                    try:
+                        veriler[key] = pd.read_json(value, orient='split')
+                    except Exception:
+                        continue
+            return son_adim_id, veriler
+        except (FileNotFoundError, json.JSONDecodeError):
             logging.info("Durum dosyası bulunamadı. İş akışı en baştan başlatılacak.")
             print("-> Durum dosyası bulunamadı. İş akışı en baştan başlatılacak.")
             return None, {}
+
     elif mod == 'yaz':
+        if uretim_verileri is None:
+            return False
+
         guncel_uretim_verileri = uretim_verileri.copy()
         for key, value in guncel_uretim_verileri.items():
             if isinstance(value, pd.DataFrame):
                 guncel_uretim_verileri[key] = value.to_json(orient='split')
-        state = {"last_completed_step_id": adim_id, "uretim_verileri": guncel_uretim_verileri}
-        with open(state_file_path, 'w', encoding='utf-8') as f:
-            json.dump(state, f, ensure_ascii=False, indent=4)
-        logging.info(f"Durum güncellendi. Son tamamlanan adım: {adim_id}")
+
+        data_to_write = {"last_completed_step_id": adim_id, "uretim_verileri": guncel_uretim_verileri}
+        new_state_bytes = json.dumps(data_to_write, ensure_ascii=False, indent=4).encode('utf-8')
+
+        guard_rules = config.get("pl", {}).get("security", {}).get("size_shrink_guard", {})
+        if guard_rules and os.path.exists(state_filepath):
+            new_size = len(new_state_bytes)
+            try:
+                old_size = os.path.getsize(state_filepath)
+                if old_size > 0:
+                    size_diff = old_size - new_size
+                    threshold_bytes = guard_rules.get("threshold_bytes", 4096)
+                    threshold_ratio = guard_rules.get("threshold_percent", 0.005)
+
+                    shrink_ratio_actual = size_diff / old_size if old_size > 0 else 0
+
+                    is_over_byte_threshold = size_diff > threshold_bytes
+                    is_over_percent_threshold = shrink_ratio_actual > threshold_ratio
+
+                    if is_over_byte_threshold or is_over_percent_threshold:
+                        shrink_percent_display = shrink_ratio_actual * 100
+                        threshold_percent_display = threshold_ratio * 100
+
+                        print("--- GÜVENLİK UYARISI: VERİ KÜÇÜLMESİ ---")
+                        print(f"Durum dosyası boyutu tehlikeli oranda küçüldü.")
+                        print(f"  Eski Boyut: {old_size} bytes, Yeni Boyut: {new_size} bytes")
+                        print(f"  Fark: -{size_diff} bytes ({shrink_percent_display:.2f}%)")
+                        print(f"Eşikler: >{threshold_bytes} bytes VEYA >{threshold_percent_display:.1f}%")
+
+                        if guard_rules.get("on_violation") == "block_and_request_approval":
+                            print("İşlem durduruldu. Veri kaybını önlemek için yazma işlemi iptal edildi.")
+                            return False
+            except Exception as e:
+                print(f"UYARI: Küçülme koruması çalışırken bir hata oluştu: {e}")
+
+        try:
+            with open(state_filepath, 'w', encoding='utf-8') as f:
+                 f.write(new_state_bytes.decode('utf-8'))
+            logging.info(f"Durum güncellendi. Son tamamlanan adım: {adim_id}")
+            return True
+        except Exception as e:
+            print(f"HATA: Durum dosyası yazılırken beklenmedik bir hata oluştu: {e}")
+            logging.error(f"Durum dosyası yazma hatası: {e}", exc_info=True)
+            return False
+
+    return None
 
 def adim_icin_model_sec(adim_id):
     """

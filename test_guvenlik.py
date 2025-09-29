@@ -2,8 +2,8 @@ import os
 import json
 import sys
 
-# Ana motorumuzdan gerekli fonksiyonları import edelim
-from uretim_motoru import manage_state, verify_json_integrity
+# Ana motorumuzdan (artık uretim_scripti.py) gerekli fonksiyonları import edelim
+from uretim_scripti import durum_yonetimi
 
 def load_and_normalize_config(filepath):
     """
@@ -34,9 +34,9 @@ def load_and_normalize_config(filepath):
 
 def main():
     """
-    Veri küçülme korumasını test eder.
+    Veri küçülme korumasını (artık `durum_yonetimi` içinde) test eder.
     """
-    print("--- Güvenlik Özellikleri Test Scripti ---")
+    print("--- Güvenlik Özellikleri Test Scripti (Entegre Motor) ---")
 
     config_filepath = "uretim_cekirdek_v15_revised.json"
     state_filepath = "RUN_STATE.json"
@@ -48,37 +48,38 @@ def main():
 
     # 2. Bellekte büyük bir başlangıç durumu oluştur
     large_content = "x" * 10 * 1024 # 10KB'lık veri
-    initial_state = {
-        "last_completed_step": "initial_setup",
+    initial_adim_id = "initial_setup"
+    initial_uretim_verileri = {
         "data": {
             "large_data_block": large_content
         }
     }
 
-    # 3. Bu büyük durumu manage_state ile dosyaya yaz (Bu, 'old_size' olacak)
+    # 3. Bu büyük durumu durum_yonetimi ile dosyaya yaz (Bu, 'old_size' olacak)
     print("-> Test için büyük boyutlu 'RUN_STATE.json' dosyası oluşturuluyor...")
     # Önce varsa eski test dosyasını temizle
     if os.path.exists(state_filepath):
         os.remove(state_filepath)
 
-    initial_write_ok = manage_state(config, data=initial_state, mode='write')
+    initial_write_ok = durum_yonetimi(config, adim_id=initial_adim_id, uretim_verileri=initial_uretim_verileri, mod='yaz')
     if not initial_write_ok:
         print("HATA: Test için başlangıç durum dosyası oluşturulamadı.")
         sys.exit(1)
     print(f"-> Başlangıç dosyası oluşturuldu (Boyut: {os.path.getsize(state_filepath)} bytes).")
 
     # 4. Durumu oku ve tehlikeli değişikliği yap (veriyi küçült)
-    current_state = manage_state(config, mode='read')
-    if not current_state:
+    son_adim_id, uretim_verileri = durum_yonetimi(config, mod='oku')
+    if uretim_verileri is None:
         print("HATA: Test durumu dosyası geri okunamadı.")
         sys.exit(1)
     print("-> Büyük veri bloğu içeren durum dosyası okundu.")
 
-    del current_state['data']['large_data_block']
+    # Tehlikeli değişikliği yap
+    del uretim_verileri['data']['large_data_block']
     print("-> 'large_data_block' durumdan silindi. Küçülmüş durum yazılmaya çalışılıyor...")
 
     # 5. Küçülmüş durumu yazmayı dene ve korumanın devreye girmesini bekle
-    write_successful = manage_state(config, data=current_state, mode='write')
+    write_successful = durum_yonetimi(config, adim_id=son_adim_id, uretim_verileri=uretim_verileri, mod='yaz')
 
     # 6. Sonucu doğrula
     if not write_successful:
