@@ -148,19 +148,72 @@ def adim_icin_model_sec(adim_id):
         return 'gemini-2.5-flash'
 
 def csv_on_isleme_yap(dosya_yolu, kurallar):
-    """Bir CSV dosyasını pandas kullanarak yerel olarak işler."""
-    print(f"   -> Pandas ile yerel ön işleme başlatıldı: {dosya_yolu}")
-    try:
-        df = pd.read_csv(dosya_yolu, encoding='utf-8-sig', sep=None, engine='python')
-        dedupe_sutun = kurallar.get("pre", {}).get("dedupe_on", [])
-        if dedupe_sutun:
-            df.drop_duplicates(subset=dedupe_sutun, inplace=True)
-            print(f"   -> '{', '.join(dedupe_sutun)}' sütununa göre tekrarlar silindi.")
-        print("   -> Yerel ön işleme tamamlandı.")
-        return df
-    except Exception as e:
-        logging.error(f"Pandas ile CSV işlenirken hata: {e}")
-        raise
+    """
+    Bir CSV dosyasını, JSON'da belirtilen kurallara göre (encoding, delimiter,
+    header aliases, validation, semantic repair) pandas kullanarak dinamik olarak işler.
+    """
+    print(f"   -> Gelişmiş CSV ön işleme başlatıldı: {dosya_yolu}")
+
+    pre_rules = kurallar.get("pre", {})
+    validation_rules = kurallar.get("v", {})
+
+    # Satır Doğrulama Kuralını Uygula
+    on_bad_lines_policy = 'warn'
+    if validation_rules.get("row_length_equals_header", {}).get("on_f") == "halt":
+        on_bad_lines_policy = 'error'
+        print("   -> Kural aktif: Satır uzunluğu başlıkla eşleşmezse işlem durdurulacak.")
+
+    # Dinamik Encoding ve Delimiter Tespiti
+    encodings = pre_rules.get("encoding", ["utf-8", "utf-8-sig"])
+    delimiters = pre_rules.get("delimiter_probe", [",", ";", "\t"])
+
+    df = None
+    for encoding in encodings:
+        for delimiter in delimiters:
+            try:
+                print(f"   -> Deneniyor: Encoding='{encoding}', Delimiter='{delimiter}'")
+                df = pd.read_csv(dosya_yolu, encoding=encoding, sep=delimiter, engine='python', on_bad_lines=on_bad_lines_policy)
+                print(f"   -> Başarılı: Dosya '{encoding}' kodlaması ve '{delimiter}' ayırıcısı ile okundu.")
+                break
+            except (UnicodeDecodeError, pd.errors.ParserError) as e:
+                logging.warning(f"'{encoding}' & '{delimiter}' ile okuma başarısız: {e}")
+                continue
+        if df is not None:
+            break
+
+    if df is None:
+        logging.error(f"Tüm encoding ve delimiter kombinasyonları denendi ancak '{dosya_yolu}' okunamadı.")
+        raise ValueError(f"'{dosya_yolu}' dosyası belirtilen formatlarda okunamadı.")
+
+    # Başlık Standardizasyonu (Header Aliases)
+    if pre_rules.get("header_canonical", False):
+        alias_map = kurallar.get("header_aliases")
+        if alias_map:
+            print("   -> Kanonik başlık standardizasyonu (header_aliases) uygulanıyor...")
+            df.rename(columns=alias_map, inplace=True)
+            print("   -> Başlıklar standartlaştırıldı.")
+
+    # Semantik Onarım (Semantic Soft Repair)
+    repair_rules = pre_rules.get("semantic_soft_repair", {})
+    if repair_rules:
+        print("   -> Semantik onarım kuralları uygulanıyor...")
+        for column, rules in repair_rules.items():
+            if column in df.columns:
+                if rules.get("must_contain_http"):
+                    print(f"      -> '{column}' sütununda 'http' kontrolü yapılıyor.")
+                    df[column] = df[column].apply(
+                        lambda x: f"http://{x}" if isinstance(x, str) and not x.startswith("http") and "." in x else x
+                    )
+                # Diğer semantik onarım kuralları buraya eklenebilir (must_contain_alpha vb.)
+
+    # Tekrarlanan Verileri Silme (Deduplication)
+    dedupe_sutun = pre_rules.get("dedupe_on", [])
+    if dedupe_sutun:
+        df.drop_duplicates(subset=dedupe_sutun, inplace=True)
+        print(f"   -> '{', '.join(dedupe_sutun)}' sütununa göre tekrarlar silindi.")
+
+    print("   -> Yerel ön işleme tamamlandı.")
+    return df
 
 def gorev_paketi_hazirla(adim_id, adim_detaylari, config, uretim_verileri):
     """
