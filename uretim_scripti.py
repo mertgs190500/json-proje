@@ -6,6 +6,8 @@ import google.generativeai as genai
 import dotenv
 import pandas as pd
 from PIL import Image
+import hashlib
+import sys
 
 # --- FAZ 1: KURULUM VE YARDIMCI FONKSİYONLAR ---
 
@@ -15,6 +17,36 @@ MODEL_FIYATLARI_USD = {
     "gemini-2.5-flash": {"input": 0.35, "output": 1.05}
 }
 USD_TO_TRY_KURU = 43.0
+
+def verify_json_integrity(filepath):
+    """
+    Verilen JSON dosyasının SHA256 hash'ini hesaplar ve dosya içindeki
+    beklenen hash ile karşılaştırarak bütünlüğünü doğrular.
+    """
+    try:
+        with open(filepath, 'rb') as f:
+            file_bytes = f.read()
+        calculated_hash = hashlib.sha256(file_bytes).hexdigest()
+        config_data = json.loads(file_bytes.decode('utf-8'))
+        expected_hash = config_data.get("sg", {}).get("expected_sha256")
+        if not expected_hash:
+            print(f"HATA: '{filepath}' içinde beklenen SHA256 hash'i (/sg/expected_sha256) bulunamadı.")
+            logging.error(f"'{filepath}' içinde beklenen SHA256 hash'i bulunamadı.")
+            return None
+        if calculated_hash == expected_hash:
+            logging.info(f"'{filepath}' bütünlük kontrolünü geçti. Hash'ler eşleşiyor.")
+            return config_data
+        else:
+            print("--- GÜVENLİK UYARISI: BÜTÜNLÜK ---")
+            print(f"HATA: '{filepath}' dosyasının bütünlüğü doğrulanamadı.")
+            print(f"Hesaplanan SHA256: {calculated_hash}")
+            print(f"Beklenen SHA256:   {expected_hash}")
+            logging.critical(f"BÜTÜNLÜK HATASI: '{filepath}'. Hesaplanan: {calculated_hash}, Beklenen: {expected_hash}")
+            return None
+    except Exception as e:
+        print(f"HATA: Bütünlük kontrolü sırasında beklenmedik bir hata oluştu: {e}")
+        logging.error(f"Bütünlük kontrolü hatası: {e}")
+        return None
 
 def kurulum_ve_yapilandirma():
     """Script başladığında gerekli tüm yapılandırmaları ve dosyaları yükler."""
@@ -33,25 +65,22 @@ def kurulum_ve_yapilandirma():
         logging.error(f"Gemini API yapılandırılamadı: {e}")
         return None, None
     config_dosya_adi = "uretim_cekirdek_v15_revised.json"
-    try:
-        with open(config_dosya_adi, 'r', encoding='utf-8') as f:
-            config = json.load(f)
-        logging.info(f"'{config_dosya_adi}' başarıyla yüklendi.")
-        print(f"-> Üretim planı ('{config_dosya_adi}') başarıyla yüklendi.")
-    except Exception as e:
-        logging.error(f"Üretim planı dosyası okunurken hata: {e}")
-        return None, None
+    print(f"-> Üretim planı ('{config_dosya_adi}') yükleniyor ve doğrulanıyor...")
+    config = verify_json_integrity(config_dosya_adi)
+    if not config:
+        print("-> Bütünlük kontrolü başarısız olduğu için işlem durduruldu.")
+        sys.exit(1)
+    print(f"-> Üretim planı başarıyla yüklendi ve doğrulandı.")
+    logging.info(f"'{config_dosya_adi}' başarıyla yüklendi ve doğrulandı.")
     return config, api_key
 
 def durum_yonetimi(config, adim_id=None, uretim_verileri=None, mod='yaz'):
-    """
-    Durum dosyasını (RUN_STATE.json) yönetir. Veri küçülme koruması içerir.
-    """
-    state_filepath = config.get("fs", {}).get("rt_p", {}).get("run_state_file", "RUN_STATE.json")
+    """RUN_STATE.json dosyasını okur veya yazar. Yazma modunda veri küçülme koruması uygular."""
+    state_file_path = config.get("fs", {}).get("rt_p", {}).get("run_state_file", "RUN_STATE.json")
 
     if mod == 'oku':
         try:
-            with open(state_filepath, 'r', encoding='utf-8') as f:
+            with open(state_file_path, 'r', encoding='utf-8') as f:
                 state = json.load(f)
             son_adim_id = state.get("last_completed_step_id")
             veriler = state.get("uretim_verileri", {})
@@ -64,62 +93,59 @@ def durum_yonetimi(config, adim_id=None, uretim_verileri=None, mod='yaz'):
                     except Exception:
                         continue
             return son_adim_id, veriler
-        except (FileNotFoundError, json.JSONDecodeError):
+        except FileNotFoundError:
             logging.info("Durum dosyası bulunamadı. İş akışı en baştan başlatılacak.")
             print("-> Durum dosyası bulunamadı. İş akışı en baştan başlatılacak.")
             return None, {}
+        except json.JSONDecodeError:
+            logging.error(f"Durum dosyası '{state_file_path}' bozuk. İşlem durduruluyor.")
+            print(f"HATA: Durum dosyası '{state_file_path}' okunamadı veya bozuk. Lütfen kontrol edin.")
+            sys.exit(1)
 
     elif mod == 'yaz':
-        if uretim_verileri is None:
-            return False
-
         guncel_uretim_verileri = uretim_verileri.copy()
         for key, value in guncel_uretim_verileri.items():
             if isinstance(value, pd.DataFrame):
                 guncel_uretim_verileri[key] = value.to_json(orient='split')
+        state = {"last_completed_step_id": adim_id, "uretim_verileri": guncel_uretim_verileri}
 
-        data_to_write = {"last_completed_step_id": adim_id, "uretim_verileri": guncel_uretim_verileri}
-        new_state_bytes = json.dumps(data_to_write, ensure_ascii=False, indent=4).encode('utf-8')
-
-        guard_rules = config.get("pl", {}).get("security", {}).get("size_shrink_guard", {})
-        if guard_rules and os.path.exists(state_filepath):
-            new_size = len(new_state_bytes)
+        shrink_guard_rules = config.get("security", {}).get("size_shrink_guard", {})
+        if shrink_guard_rules:
             try:
-                old_size = os.path.getsize(state_filepath)
-                if new_size < old_size:
-                    size_diff = old_size - new_size
-                    threshold_bytes = guard_rules.get("threshold_bytes", 4096)
-                    threshold_ratio = guard_rules.get("threshold_percent", 0.005)
-                    shrink_ratio_actual = size_diff / old_size if old_size > 0 else 0
+                new_state_content_bytes = json.dumps(state, ensure_ascii=False, indent=4).encode('utf-8')
+                new_size = len(new_state_content_bytes)
 
-                    is_over_byte_threshold = size_diff > threshold_bytes
-                    is_over_percent_threshold = shrink_ratio_actual > threshold_ratio
+                if os.path.exists(state_file_path):
+                    old_size = os.path.getsize(state_file_path)
 
-                    if is_over_byte_threshold or is_over_percent_threshold:
-                        shrink_percent_display = shrink_ratio_actual * 100
-                        threshold_percent_display = threshold_ratio * 100
-                        print("--- GÜVENLİK UYARISI: VERİ KÜÇÜLMESİ ---")
-                        print(f"Durum dosyası boyutu tehlikeli oranda küçüldü.")
-                        print(f"  Eski Boyut: {old_size} bytes, Yeni Boyut: {new_size} bytes")
-                        print(f"  Fark: -{size_diff} bytes ({shrink_percent_display:.2f}%)")
-                        print(f"Eşikler: >{threshold_bytes} bytes VEYA >{threshold_percent_display:.1f}%")
-                        if guard_rules.get("on_violation") == "block_and_request_approval":
-                            print("İşlem durduruldu. Veri kaybını önlemek için yazma işlemi iptal edildi.")
-                            return False
+                    if new_size < old_size:
+                        size_diff = old_size - new_size
+                        percent_diff = (size_diff / old_size) if old_size > 0 else 0
+
+                        threshold_percent = shrink_guard_rules.get("threshold_percent", 0.005)
+                        threshold_bytes = shrink_guard_rules.get("threshold_bytes", 4096)
+
+                        if percent_diff > threshold_percent and size_diff > threshold_bytes:
+                            error_msg = shrink_guard_rules.get("msg", "GÜVENLİK KORUMASI: Durum dosyası beklenmedik şekilde küçüldü.")
+                            print("\n--- GÜVENLİK UYARISI: VERİ BÜTÜNLÜĞÜ ---")
+                            print(f"HATA: {error_msg}")
+                            print(f"Önceki boyut: {old_size} bytes, Yeni boyut: {new_size} bytes, Fark: {size_diff} bytes")
+                            print(f"Yazma işlemi durduruldu.")
+                            logging.critical(f"VERİ KÜÇÜLME KORUMASI DEVREYE GİRDİ: {error_msg}. Eski: {old_size}B, Yeni: {new_size}B.")
+                            sys.exit(1)
+
+                with open(state_file_path, 'wb') as f:
+                    f.write(new_state_content_bytes)
+
             except Exception as e:
-                print(f"UYARI: Küçülme koruması çalışırken bir hata oluştu: {e}")
+                print(f"HATA: Durum yönetimi sırasında güvenlik kontrolü hatası: {e}")
+                logging.error(f"Durum yönetimi güvenlik hatası: {e}")
+                sys.exit(1)
+        else:
+            with open(state_file_path, 'w', encoding='utf-8') as f:
+                json.dump(state, f, ensure_ascii=False, indent=4)
 
-        try:
-            with open(state_filepath, 'w', encoding='utf-8') as f:
-                 f.write(new_state_bytes.decode('utf-8'))
-            logging.info(f"Durum güncellendi. Son tamamlanan adım: {adim_id}")
-            return True
-        except Exception as e:
-            print(f"HATA: Durum dosyası yazılırken beklenmedik bir hata oluştu: {e}")
-            logging.error(f"Durum dosyası yazma hatası: {e}", exc_info=True)
-            return False
-
-    return False # Explicitly return False for unhandled cases
+        logging.info(f"Durum güncellendi. Son tamamlanan adım: {adim_id}")
 
 def adim_icin_model_sec(adim_id):
     """
@@ -148,72 +174,19 @@ def adim_icin_model_sec(adim_id):
         return 'gemini-2.5-flash'
 
 def csv_on_isleme_yap(dosya_yolu, kurallar):
-    """
-    Bir CSV dosyasını, JSON'da belirtilen kurallara göre (encoding, delimiter,
-    header aliases, validation, semantic repair) pandas kullanarak dinamik olarak işler.
-    """
-    print(f"   -> Gelişmiş CSV ön işleme başlatıldı: {dosya_yolu}")
-
-    pre_rules = kurallar.get("pre", {})
-    validation_rules = kurallar.get("v", {})
-
-    # Satır Doğrulama Kuralını Uygula
-    on_bad_lines_policy = 'warn'
-    if validation_rules.get("row_length_equals_header", {}).get("on_f") == "halt":
-        on_bad_lines_policy = 'error'
-        print("   -> Kural aktif: Satır uzunluğu başlıkla eşleşmezse işlem durdurulacak.")
-
-    # Dinamik Encoding ve Delimiter Tespiti
-    encodings = pre_rules.get("encoding", ["utf-8", "utf-8-sig"])
-    delimiters = pre_rules.get("delimiter_probe", [",", ";", "\t"])
-
-    df = None
-    for encoding in encodings:
-        for delimiter in delimiters:
-            try:
-                print(f"   -> Deneniyor: Encoding='{encoding}', Delimiter='{delimiter}'")
-                df = pd.read_csv(dosya_yolu, encoding=encoding, sep=delimiter, engine='python', on_bad_lines=on_bad_lines_policy)
-                print(f"   -> Başarılı: Dosya '{encoding}' kodlaması ve '{delimiter}' ayırıcısı ile okundu.")
-                break
-            except (UnicodeDecodeError, pd.errors.ParserError) as e:
-                logging.warning(f"'{encoding}' & '{delimiter}' ile okuma başarısız: {e}")
-                continue
-        if df is not None:
-            break
-
-    if df is None:
-        logging.error(f"Tüm encoding ve delimiter kombinasyonları denendi ancak '{dosya_yolu}' okunamadı.")
-        raise ValueError(f"'{dosya_yolu}' dosyası belirtilen formatlarda okunamadı.")
-
-    # Başlık Standardizasyonu (Header Aliases)
-    if pre_rules.get("header_canonical", False):
-        alias_map = kurallar.get("header_aliases")
-        if alias_map:
-            print("   -> Kanonik başlık standardizasyonu (header_aliases) uygulanıyor...")
-            df.rename(columns=alias_map, inplace=True)
-            print("   -> Başlıklar standartlaştırıldı.")
-
-    # Semantik Onarım (Semantic Soft Repair)
-    repair_rules = pre_rules.get("semantic_soft_repair", {})
-    if repair_rules:
-        print("   -> Semantik onarım kuralları uygulanıyor...")
-        for column, rules in repair_rules.items():
-            if column in df.columns:
-                if rules.get("must_contain_http"):
-                    print(f"      -> '{column}' sütununda 'http' kontrolü yapılıyor.")
-                    df[column] = df[column].apply(
-                        lambda x: f"http://{x}" if isinstance(x, str) and not x.startswith("http") and "." in x else x
-                    )
-                # Diğer semantik onarım kuralları buraya eklenebilir (must_contain_alpha vb.)
-
-    # Tekrarlanan Verileri Silme (Deduplication)
-    dedupe_sutun = pre_rules.get("dedupe_on", [])
-    if dedupe_sutun:
-        df.drop_duplicates(subset=dedupe_sutun, inplace=True)
-        print(f"   -> '{', '.join(dedupe_sutun)}' sütununa göre tekrarlar silindi.")
-
-    print("   -> Yerel ön işleme tamamlandı.")
-    return df
+    """Bir CSV dosyasını pandas kullanarak yerel olarak işler."""
+    print(f"   -> Pandas ile yerel ön işleme başlatıldı: {dosya_yolu}")
+    try:
+        df = pd.read_csv(dosya_yolu, encoding='utf-8-sig', sep=None, engine='python')
+        dedupe_sutun = kurallar.get("pre", {}).get("dedupe_on", [])
+        if dedupe_sutun:
+            df.drop_duplicates(subset=dedupe_sutun, inplace=True)
+            print(f"   -> '{', '.join(dedupe_sutun)}' sütununa göre tekrarlar silindi.")
+        print("   -> Yerel ön işleme tamamlandı.")
+        return df
+    except Exception as e:
+        logging.error(f"Pandas ile CSV işlenirken hata: {e}")
+        raise
 
 def gorev_paketi_hazirla(adim_id, adim_detaylari, config, uretim_verileri):
     """
