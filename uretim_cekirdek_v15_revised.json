@@ -11248,7 +11248,7 @@
     },
     "sg": {
         "abort_on_sha_mismatch": true,
-        "expected_sha256": "62a2a41add954df2619f9a675112566ae1d12b1edefe36b431d1d5b711f79cfd",
+        "expected_sha256": "109caf6414fbe0c5fba1961a54cf62623e1c2f9abab5e3a35f199c0376d0170a",
         "hitl_checkpoints": [
             "0a",
             "1",
