@@ -3192,9 +3192,12 @@
               "rls": {
                 "$ref": "#/_defs/def_9666a082"
               },
-              "rs": {
-                "$ref": "#/_defs/def_0ec95366"
-              },
+              "rs": [
+                "From top 8 shops (Step 5a), select 4 for deep analysis.",
+                "Extract keywords, titles, tags, and pricing strategies from their top 5 listings.",
+                "Aggregate findings into /competitors/analysis_summary.",
+                "Use this data to inform keyword gaps (Step 9) and title/description generation (Steps 10, 11)."
+              ],
               "up_sig": {
                 "pol": "mark_stale_on_upstream_change"
               },
