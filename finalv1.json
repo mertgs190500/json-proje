@@ -5261,13 +5261,22 @@
           "$ref": "#/_defs/def_83385711",
           "kb_ref": "[REF to /_runtime/kb/]"
         },
-        "o": {
-          "system_health_report": {
-            "blockers": [],
-            "warnings": [],
-            "info": []
-          }
-        },
+        "o": [
+          "self_check.report{}",
+          "self_check.missing[]",
+          "self_check.status",
+          "self_check.timestamp",
+          "boot.session.fingerprint",
+          "boot.session.profile{}",
+          "boot.env.summary{}",
+          "boot.sot.sources{}",
+          "boot.hashes{}",
+          "boot.id_aliases{}",
+          "boot.enabled_steps{}",
+          "boot.sequence[]",
+          "boot.learned_prefs{}",
+          "boot.health{}"
+        ],
         "enforcement": {
           "on_violation": "warn"
         },
@@ -8006,11 +8015,13 @@
         },
         "en": true,
         "purp": "Description quality & policy enforcement (mobile-first, 3-paragraph, US English, alignment)",
-        "i": {
-          "current_date_ref": "[REF to runtime.current_date]",
-          "seasonal_windows_ref": "[REF to /_runtime/seasonal_windows]",
-          "target_persona_ref": "[REF to Step 3p strategy.target_persona]"
-        },
+        "i": [
+          "draft.title",
+          "keywords.focus[1..4]",
+          "seo.keywords.supporting[]",
+          "product.info{}",
+          "shop.profile{}"
+        ],
         "outputs_expected": [
           "draft.description"
         ],
@@ -8222,10 +8233,17 @@
         "validators_required": false,
         "en": true,
         "purp": "Ara Değerlendirme – SEO Uyum",
-        "i": {
-          "thumbnail_ctr_ref": "[REF to 1a thumbnail_ctr_analysis]",
-          "persona_niche_ref": "[REF to 3p outputs]"
-        },
+        "i": [
+          "title.final",
+          "description.final",
+          "tags.final[13]",
+          "media.checklist",
+          "media.issues[]",
+          "seo.keywords.focus[]",
+          "seo.keywords.supporting[]",
+          "ads.keywords.final[]",
+          "attributes.selected{}"
+        ],
         "o": {
           "$ref": "#/_defs/def_af258ca5",
           "slqs_score": {
@@ -8594,13 +8612,22 @@
         "validators_required": false,
         "en": true,
         "purp": "30-Day Listing Performance Report (+ Optimization)",
-        "i": {
-          "slqs_score_ref": "[REF to Step 14/seo_package slqs_score]"
-        },
-        "o": {
-          "performance_diagnosis": {},
-          "ab_test_hypotheses": []
-        },
+        "i": [
+          "metrics.ads{ctr,roas,orders,cpc,spend}",
+          "metrics.seo{impressions,visits,orders,conv_rate}",
+          "ab_test.plan",
+          "ads.plan{}",
+          "ads_sync.final_positive[]",
+          "ads_sync.final_negative[]",
+          "metrics.window.fixed_range{start:2025-08-20,end:2025-09-03}"
+        ],
+        "o": [
+          "monitoring.report{}",
+          "monitoring.issues[]",
+          "monitoring.recommendations[]",
+          "keywords.focus.updated[]",
+          "focus.reweighting.log"
+        ],
         "outputs_expected": {
           "report": {},
           "optimizations": []
@@ -8788,12 +8815,9 @@
         "gemini_do": [
           "Özellik çıkarır"
         ],
-        "rs": [
-          "Her görsel için SEO uyumlu alt_text üret.",
-          "Görselden stil/malzeme çıkarımı yap (visual_attribute_suggestions, visual_tag_suggestions).",
-          "CTR potansiyeline göre görselleri puanla (thumbnail_score) (A/B testi için).",
-          "Analyze images for Thumbnail potential. Assign a 'CTR_Potential_Score' (1-100) based on clarity, composition, lighting, and relevance. Highlight the image ID with the highest score as 'best_candidate'."
-        ]
+        "rs": {
+          "note_inferred_product_type": "Dynamically infers product type from visual analysis."
+        }
       },
       "1b": {
         "auto_c": false,
@@ -9961,15 +9985,18 @@
         },
         "validators_required": false,
         "purp": "ngrams_and_recombination",
-        "o": {
-          "market_price_analysis": {},
-          "visual_strategy_gaps": [],
-          "competitor_lqs_drivers_report": {
-            "visual_strategy": null,
-            "title_emphasis": null,
-            "price_positioning": null
-          }
-        },
+        "o": [
+          "popular.products.top[]",
+          "popular.keywords.top[]",
+          "popular.segments.summary{}",
+          "popular.focus_signals{}",
+          "popular.notes",
+          "similarity.report{}",
+          "similarity.score",
+          "similarity.label",
+          "similarity.notes",
+          "ads.seed.positive[]"
+        ],
         "outputs_expected": {
           "popular_attributes": [],
           "price_bands": []
@@ -10025,11 +10052,9 @@
         "gemini_do": [
           "Analiz ve özet"
         ],
-        "rs": [
-          "Pazar fiyat istatistiklerini hesapla (market_price_analysis).",
-          "Rakiplerin fotoğraf stratejilerini analiz et (visual_strategy_gaps).",
-          "Analyze top competitors' LQS Drivers: Identify their primary visual strategy (Lifestyle vs. Studio thumbnail), title structure emphasis (Feature vs. Benefit vs. Occasion frontloading), and price positioning relative to the market median."
-        ],
+        "rs": {
+          "note_dynamic_filter": "Filters popular products based on inferred_product_type from step 1a."
+        },
         "fl": {
           "post_action": "Write market_price_analysis to /_runtime/kb/market_cache"
         }
@@ -10399,10 +10424,15 @@
         "i": {
           "$ref": "#/_defs/def_d7d663bb"
         },
-        "o": {
-          "keyword_gaps": [],
-          "proactive_negatives_list": []
-        },
+        "o": [
+          "market.snapshot{}",
+          "ads.seed.positive[]",
+          "ads.seed.negative[]",
+          "market.notes",
+          "market.aggregation{}",
+          "seed.terms[]",
+          "negative_terms.base[]"
+        ],
         "outputs_expected": {
           "ads_core": {
             "terms": [],
@@ -10543,10 +10573,9 @@
         "gemini_do": [
           "Çekirdek anahtarlar üretir"
         ],
-        "rs": [
-          "Keyword Gap Analysis: Identify keywords with high CR/CTR present in the market data (Step 5a) but missing from our pool (Step 3a).",
-          "Proactive Negative Generation: Based on Step 0 product info (e.g., if 'solid gold'), generate a list of irrelevant but high-traffic terms (e.g., 'plated', 'vermeil', 'filled')."
-        ]
+        "rs": {
+          "note_dynamic_filter": "Filters competitor analysis based on inferred_product_type from step 1a."
+        }
       },
       "8": {
         "analysis_rules": {
@@ -10818,21 +10847,15 @@
         "await_u": false,
         "auto_c": true,
         "req_ctx": true,
-        "i": {
-          "product_price_ref": "[REF to Step 0 price]",
-          "conversion_rate_ref": "[REF to Step 3a CR data]"
-        },
-        "o": {
-          "ads_campaign_plan": {
-            "groups": [],
-            "budget_strategy": null,
-            "ab_tests": []
-          },
-          "ads_budget_proposal": {
-            "distribution": [],
-            "roas_estimates": []
-          }
-        },
+        "i": [
+          "ads_plan{}",
+          "popular.keywords.top[]",
+          "keywords.focus[1..4]"
+        ],
+        "o": [
+          "ads_keywords_expanded[]",
+          "ads_negative_candidates[]"
+        ],
         "mirror": {
           "ads_plan{}": {
             "__REF__": "/_run_order/steps/8/outputs/0"
@@ -10846,9 +10869,7 @@
         ]
       },
       "seo_package": {
-        "i": {
-          "brand_voice_ref": "[REF to /shop_profile/brand_voice]"
-        },
+        "i": [],
         "o": [],
         "await_u": false,
         "auto_c": true,
@@ -10965,9 +10986,13 @@
         "requires": [
           "8B"
         ],
-        "i": {
-          "proactive_negatives_ref": "[REF to Step 7 proactive_negatives_list]"
-        },
+        "i": [
+          "ads_plan{}",
+          "ads_keywords[]",
+          "ads_keywords_alt[]",
+          "market.snapshot{}",
+          "popular.keywords.top[]"
+        ],
         "o": [
           {
             "__REF__": "/_run_order/steps/8C/mirror/ads.seed.negative[]"
