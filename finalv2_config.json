@@ -1,0 +1,102 @@
+{
+    "workflow_id": "Etsy_SEO_Pipeline_V2_Full_Demo",
+    "steps": [
+        {
+            "id": "MARKET_INTEL_01",
+            "name": "Pazar İstihbaratı Toplama",
+            "module": "market_analyzer.py",
+            "i": {"niche": "gümüş minimalist kolye"},
+            "o": {
+                "contract": "MarketIntelligenceData",
+                "context_key": "market_data"
+            },
+            "rs": {"ruleset_name": "AlwaysRun"},
+            "meta": {
+                "description": "Rakipleri, trend etiketleri ve fiyatlandırmayı analiz eder (Rapor 2.1).",
+                "author": "strategy_team",
+                "version": "1.0",
+                "last_updated": "2025-10-02T11:00:00Z"
+            }
+        },
+        {
+            "id": "VOC_ANALYSIS_01",
+            "name": "Müşterinin Sesi Analizi",
+            "module": "voc_analyzer.py",
+            "i": {
+                "reviews": ["Ürün harika, hızlı kargo!", "Kalitesi mükemmel ama beklediğimden küçük geldi."]
+            },
+            "o": {
+                "contract": "VoiceOfCustomerInsights",
+                "context_key": "voc_data"
+            },
+            "rs": {"ruleset_name": "AlwaysRun"},
+            "meta": {
+                "description": "Müşteri yorumlarını analiz ederek metin yazarlığı için içgörüler üretir (Rapor 2.2).",
+                "author": "conversion_team",
+                "version": "1.0",
+                "last_updated": "2025-10-02T13:00:00Z"
+            }
+        },
+        {
+            "id": "KEYWORD_PREP_01",
+            "name": "Stratejik Anahtar Kelime Hazırlama (Konsolide)",
+            "module": "keyword_processor.py",
+            "i": {
+                "seed": "gümüş kolye",
+                "market_tags": {"$ref": "context.market_data.topCompetitorTags"}
+            },
+            "o": {
+                "contract": "StrategicKeywordData",
+                "context_key": "keyword_data"
+            },
+            "rs": {"ruleset_name": "AlwaysRun"},
+            "meta": {
+                "description": "Toplama, filtreleme ve birleştirme işlemlerini tek adımda yapar (Rapor 1.1).",
+                "author": "system_architect",
+                "version": "1.0",
+                "last_updated": "2025-10-02T14:00:00Z"
+            }
+        },
+        {
+            "id": "TITLE_GEN_01",
+            "name": "Davranışsal Başlık Optimizasyonu",
+            "module": "title_optimizer.py",
+            "i": {
+                "primary_keywords": ["El Yapımı Seramik Kupa"],
+                "secondary_keywords": ["Minimalist", "Mavi Sır"],
+                "intent_keywords": ["Ofis Hediyesi", "Kahve Severler"]
+            },
+            "o": {
+                "context_key": "listing_title"
+            },
+            "rs": {"ruleset_name": "AlwaysRun"},
+            "meta": {
+                "description": "Mobil CTR'yi maksimize etmek için başlıkları optimize eder (Rapor 2.3.2).",
+                "author": "seo_team",
+                "version": "1.0",
+                "last_updated": "2025-10-02T12:00:00Z"
+            }
+        },
+        {
+            "id": "MAB_OPTIMIZATION_01",
+            "name": "MAB Başlık Optimizasyonu",
+            "module": "mab_optimizer.py",
+            "i": {
+                "variations": [
+                    {"id": "V1", "title": "El Yapımı Seramik Kupa | Hızlı Kargo"},
+                    {"id": "V2", "title": "Minimalist Seramik Fincan | Ofis Hediyesi"}
+                ]
+            },
+            "o": {
+                "context_key": "mab_results"
+            },
+            "rs": {"ruleset_name": "AlwaysRun"},
+            "meta": {
+                "description": "Başlık varyasyonlarını MAB algoritması ile test eder ve trafiği optimize eder (Rapor 2.4).",
+                "author": "data_science_team",
+                "version": "1.0",
+                "last_updated": "2025-10-02T15:00:00Z"
+            }
+        }
+    ]
+}

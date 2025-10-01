@@ -1,0 +1,33 @@
+{
+  "rulesets": {
+    "KeywordThresholdCheck": {
+      "gherkin": "Scenario: Toplanan anahtar kelime sayısı 10'dan fazlaysa devam et\n  Given anahtar kelime sayısı (kw_count) > 10\n  Then işleme devam et",
+      "logic": {
+        "conditions": {
+          "all": [
+            {
+              "fact": "kw_count",
+              "operator": "greaterThan",
+              "value": 10
+            }
+          ]
+        }
+      }
+    },
+    "HighValueProductStrategy": {
+      "gherkin": "Scenario: Fiyatı 50'den yüksek ve el yapımı ise Premium stratejiyi uygula\n  Given kategori 'el yapımı'dır\n  And fiyat > 50\n  Then 'Premium' stratejisini uygula",
+      "logic": {
+        "conditions": {
+          "all": [
+            {"fact": "category", "operator": "equal", "value": "handmade"},
+            {"fact": "price", "operator": "greaterThan", "value": 50}
+          ]
+        }
+      }
+    },
+    "AlwaysRun": {
+        "gherkin": "Scenario: Her zaman çalışır.",
+        "logic": {}
+    }
+  }
+}
