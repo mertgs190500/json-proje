@@ -12,7 +12,7 @@ class MabOptimizer:
         if variation_id == "V2": return 0.05
         return 0.01
 
-    def execute(self, inputs, context):
+    def execute(self, inputs, context, db_manager=None):
         """
         MAB (Epsilon-Greedy) algoritmasını simüle eder.
         """

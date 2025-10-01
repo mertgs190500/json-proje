@@ -1,0 +1,15 @@
+{
+  "profiles": {
+    "BaseCsvProfile": {
+      "description": "Tüm CSV dosyaları için ortak ayarlar.",
+      "delimiter_probe": [",", ";", "\t", "|"],
+      "encoding": ["utf-8", "utf-8-sig", "latin-1"],
+      "header_canonical": true
+    },
+    "CompetitorCsvProfile": {
+      "inherits": "BaseCsvProfile",
+      "dedupe_on": ["URL"],
+      "required_fields": ["Title", "URL", "Shop"]
+    }
+  }
+}

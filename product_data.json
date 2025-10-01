@@ -1,0 +1,14 @@
+{
+  "productId": "Minimalist_Band_Ring_V1",
+  "material": "Gold",
+  "colors": ["Yellow Gold", "White Gold", "Rose Gold"],
+  "sizes_us": "US 4 – 14¾",
+  "pricing": {
+    "currency": "USD",
+    "variations": {
+      "10K": 650.00,
+      "14K": 780.00,
+      "18K": 1100.00
+    }
+  }
+}
