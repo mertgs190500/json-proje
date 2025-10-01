@@ -1,0 +1,17 @@
+{
+  "documentation": {
+    "title": "Etsy SEO Otomasyon İş Akışı v2 - Kullanım Kılavuzu",
+    "admin": {
+      "restore_flow": ["Adım 1...", "Adım 2..."],
+      "unlock_flow": ["Adım 1...", "Adım 2..."]
+    },
+    "assets": {
+      "visual_examples": {
+        "guides": {
+          "detail": ["Yüzey dokusu yakın plan..."],
+          "lifestyle": ["Elde/parmakta kullanım..."]
+        }
+      }
+    }
+  }
+}

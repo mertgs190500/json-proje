@@ -63,14 +63,68 @@ class RuleEngine:
                 return False
         return True
 
+class DBManager:
+    def load_db(self, file_path):
+        logging.info(f"[DBManager] Veritabanı yükleniyor: {file_path}")
+        return load_json(file_path)
+
+    def save_db(self, file_path, data):
+        logging.info(f"[DBManager] Veritabanı kaydediliyor: {file_path}")
+        try:
+            with open(file_path, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            logging.info(f"[DBManager] Veritabanı başarıyla kaydedildi: {file_path}")
+            return True
+        except Exception as e:
+            logging.error(f"[DBManager] Veritabanı kaydedilemedi: {file_path}. Hata: {e}")
+            return False
+
+class ProfileManager:
+    def __init__(self):
+        profiles_data = load_json("csv_profiles.json")
+        self.profiles = profiles_data.get("profiles", {}) if profiles_data else {}
+        logging.info("Profile Manager başlatıldı ve CSV profilleri yüklendi.")
+
+    def get_profile(self, profile_name):
+        profile = self.profiles.get(profile_name, {}).copy()
+        if not profile:
+            logging.error(f"Profil bulunamadı: {profile_name}")
+            return {}
+
+        if "inherits" in profile:
+            parent_name = profile.pop("inherits")
+            parent_profile = self.get_profile(parent_name)
+            merged_profile = parent_profile.copy()
+            merged_profile.update(profile)
+            return merged_profile
+        else:
+            return profile
+
 class WorkflowOrchestrator:
     def __init__(self):
+        self._load_policy()
         self.workflow_schema = load_json("workflow_schema_v2.json")
         contracts_data = load_json("data_contracts.json")
         self.contracts = contracts_data.get("contracts", {}) if contracts_data else {}
         self.context = {}
         self.rule_engine = RuleEngine()
+        self.profile_manager = ProfileManager()
+        self.db_manager = DBManager()
         logging.info("Orkestratör başlatıldı ve Veri Sözleşmeleri yüklendi.")
+
+    def _load_policy(self):
+        policy_data = load_json("orchestrator_policy.json")
+        if policy_data:
+            self.policy = policy_data
+            logging.info("Orkestratör politikası yüklendi.")
+            log_level = self.policy.get("logging", {}).get("level", "INFO").upper()
+            logging.getLogger().setLevel(log_level)
+        else:
+            self.policy = {
+                "execution": {"stop_on_error": True, "stop_on_contract_violation": True},
+                "logging": {"level": "INFO"}
+            }
+            logging.warning("Orkestratör politikası bulunamadı, varsayılan ayarlar kullanılıyor.")
 
     def validate_data_contract(self, contract_name, data):
         if contract_name not in self.contracts:
@@ -108,6 +162,9 @@ class WorkflowOrchestrator:
                         resolved[key] = None
                 else:
                     resolved[key] = value
+            elif isinstance(value, dict) and "$profile" in value:
+                profile_name = value["$profile"]
+                resolved[key] = self.profile_manager.get_profile(profile_name)
             else:
                 resolved[key] = value
         return resolved
@@ -123,24 +180,46 @@ class WorkflowOrchestrator:
         for step in config_data["steps"]:
             step_id = step['id']
             logging.info(f"--- Adım: {step_id} ---")
+
             ruleset_name = step["rs"].get("ruleset_name")
             if not self.rule_engine.evaluate(ruleset_name, self.context):
                 logging.info(f"Adım {step_id} atlandı (Kurallar geçmedi).")
                 continue
+
             module_instance = self.load_module(step["module"])
             if not module_instance:
-                break
+                if self.policy["execution"].get("stop_on_error", True):
+                    logging.error("Politika gereği iş akışı durduruluyor (modül yüklenemedi).")
+                    break
+                else:
+                    logging.warning("Politika gereği hataya rağmen devam ediliyor (modül yüklenemedi).")
+                    continue
+
             raw_inputs = step["i"]
             resolved_inputs = self.resolve_inputs(raw_inputs, self.context)
+
+            output = None
             try:
-                output = module_instance.execute(resolved_inputs, self.context)
+                output = module_instance.execute(resolved_inputs, self.context, self.db_manager)
             except Exception as e:
                 logging.error(f"Adım {step_id} yürütülürken hata: {e}")
-                break
+                if self.policy["execution"].get("stop_on_error", True):
+                    logging.error("Politika gereği iş akışı durduruluyor (stop_on_error: true).")
+                    break
+                else:
+                    logging.warning("Politika gereği hataya rağmen devam ediliyor (stop_on_error: false).")
+                    continue
+
             contract_name = step["o"].get("contract")
             if contract_name and not self.validate_data_contract(contract_name, output):
-                logging.error(f"Adım {step_id} başarısız oldu (Sözleşme ihlali). İş akışı durduruluyor.")
-                break
+                logging.error(f"Adım {step_id} başarısız oldu (Sözleşme ihlali).")
+                if self.policy["execution"].get("stop_on_contract_violation", True):
+                    logging.error("Politika gereği iş akışı durduruluyor (stop_on_contract_violation: true).")
+                    break
+                else:
+                    logging.warning("Politika gereği sözleşme ihlaline rağmen devam ediliyor (stop_on_contract_violation: false).")
+                    continue
+
             context_key = step["o"].get("context_key")
             if context_key:
                 self.context[context_key] = output

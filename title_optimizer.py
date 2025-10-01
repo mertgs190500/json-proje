@@ -4,7 +4,7 @@ class TitleOptimizer:
     def __init__(self):
         self.MOBILE_CUTOFF = 40 # Rapor 2.3.2'ye göre kritik mobil görünüm karakter sayısı
 
-    def execute(self, inputs, context):
+    def execute(self, inputs, context, db_manager=None):
         """
         Başlığı mobil öncelikli mimariye göre optimize eder.
         """

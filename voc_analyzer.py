@@ -1,7 +1,7 @@
 import logging
 
 class VocAnalyzer:
-    def execute(self, inputs, context):
+    def execute(self, inputs, context, db_manager=None):
         """
         Müşteri yorumlarını analiz eder (NLP Simülasyonu).
         """

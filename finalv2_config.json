@@ -2,20 +2,37 @@
     "workflow_id": "Etsy_SEO_Pipeline_V2_Full_Demo",
     "steps": [
         {
+            "id": "DATA_LOAD_PRODUCT_00",
+            "name": "Ürün Verilerini Yükle",
+            "module": "data_loader.py",
+            "i": {"file_path": "product_data.json"},
+            "o": {"context_key": "product_specs"},
+            "rs": {"ruleset_name": "AlwaysRun"},
+            "meta": {
+                "description": "Harici product_data.json dosyasını yükler.",
+                "author": "system_architect",
+                "version": "1.0",
+                "last_updated": "2025-10-03T09:00:00Z"
+            }
+        },
+        {
             "id": "MARKET_INTEL_01",
-            "name": "Pazar İstihbaratı Toplama",
-            "module": "market_analyzer.py",
-            "i": {"niche": "gümüş minimalist kolye"},
+            "name": "CSV'den Pazar İstihbaratı Toplama",
+            "module": "csv_ingestor.py",
+            "i": {
+                "file_path": "data/competitors.csv",
+                "resolved_profile": {"$profile": "CompetitorCsvProfile"}
+            },
             "o": {
                 "contract": "MarketIntelligenceData",
                 "context_key": "market_data"
             },
             "rs": {"ruleset_name": "AlwaysRun"},
             "meta": {
-                "description": "Rakipleri, trend etiketleri ve fiyatlandırmayı analiz eder (Rapor 2.1).",
-                "author": "strategy_team",
-                "version": "1.0",
-                "last_updated": "2025-10-02T11:00:00Z"
+                "description": "Harici bir CSV dosyasını, merkezi profilleri kullanarak işler ve pazar verisi çıkarır.",
+                "author": "system_architect",
+                "version": "1.1",
+                "last_updated": "2025-10-03T16:00:00Z"
             }
         },
         {
@@ -38,12 +55,31 @@
             }
         },
         {
+            "id": "VISUAL_ANALYSIS_01",
+            "name": "Görsel Uyum Analizi",
+            "module": "visual_analyzer.py",
+            "i": {
+                "image_paths": ["dummy/path/to/image1.jpg"]
+            },
+            "o": {
+                "context_key": "visual_analysis_data"
+            },
+            "rs": {"ruleset_name": "AlwaysRun"},
+            "meta": {
+                "description": "Görsellerden anahtar kelime uyumunu analiz eder.",
+                "author": "creative_team",
+                "version": "1.0",
+                "last_updated": "2025-10-03T11:00:00Z"
+            }
+        },
+        {
             "id": "KEYWORD_PREP_01",
             "name": "Stratejik Anahtar Kelime Hazırlama (Konsolide)",
             "module": "keyword_processor.py",
             "i": {
                 "seed": "gümüş kolye",
-                "market_tags": {"$ref": "context.market_data.topCompetitorTags"}
+                "market_tags": {"$ref": "context.market_data.topCompetitorTags"},
+                "visual_tags": {"$ref": "context.visual_analysis_data.visual_tags"}
             },
             "o": {
                 "contract": "StrategicKeywordData",
@@ -96,6 +132,28 @@
                 "author": "data_science_team",
                 "version": "1.0",
                 "last_updated": "2025-10-02T15:00:00Z"
+            }
+        },
+        {
+            "id": "FEEDBACK_LOOP_01",
+            "name": "Geri Besleme Döngüsünü Çalıştır",
+            "module": "feedback_processor.py",
+            "i": {
+                "performance_data": [
+                    {"keyword": "gümüş kolye", "sales": 10, "traffic": 100},
+                    {"keyword": "minimalist takı", "sales": 0, "traffic": 100},
+                    {"keyword": "ofis hediyesi", "sales": 3, "traffic": 100}
+                ]
+            },
+            "o": {
+                "context_key": "feedback_results"
+            },
+            "rs": {"ruleset_name": "AlwaysRun"},
+            "meta": {
+                "description": "Performans verilerini işleyerek bilgi bankasını günceller.",
+                "author": "system_architect",
+                "version": "1.0",
+                "last_updated": "2025-10-03T14:00:00Z"
             }
         }
     ]
