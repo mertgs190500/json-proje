@@ -3,11 +3,11 @@ import jsonschema
 from jsonschema import validate
 import logging
 import operator
-import importlib.util
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def load_json(filename):
+    """Loads a JSON file with UTF-8 encoding."""
     try:
         with open(filename, 'r', encoding='utf-8') as f:
             return json.load(f)
@@ -19,6 +19,7 @@ def load_json(filename):
         return None
 
 def validate_against_schema(data, schema, schema_name="Genel"):
+    """Validates data against a given JSON schema."""
     try:
         validate(instance=data, schema=schema, format_checker=jsonschema.FormatChecker())
         logging.info(f"DOĞRULAMA BAŞARILI: Veri yapısı '{schema_name}' şemasına uygun.")
@@ -28,6 +29,7 @@ def validate_against_schema(data, schema, schema_name="Genel"):
         return False
 
 class RuleEngine:
+    """Evaluates declarative rules from rule_definitions.json."""
     def __init__(self):
         self.operators = {
             "equal": operator.eq,
@@ -39,115 +41,277 @@ class RuleEngine:
         logging.info("Kural Motoru başlatıldı ve kurallar yüklendi.")
 
     def evaluate(self, ruleset_name, facts):
+        """Evaluates a specific ruleset against given facts."""
         if ruleset_name not in self.rulesets:
             logging.error(f"Kural seti bulunamadı: {ruleset_name}")
             return False
+
         logic = self.rulesets[ruleset_name].get("logic", {})
         conditions = logic.get("conditions", {}).get("all", [])
+
         if not conditions:
-            return True
+            return True  # No conditions means the rule passes (e.g., AlwaysRun)
+
         for condition in conditions:
             fact_name = condition.get("fact")
             op_name = condition.get("operator")
             expected_value = condition.get("value")
             actual_value = facts.get(fact_name)
+
             if op_name not in self.operators:
                 logging.error(f"Bilinmeyen operatör: {op_name}")
                 return False
+
             op_func = self.operators[op_name]
             try:
                 if not op_func(actual_value, expected_value):
                     return False
             except (TypeError, ValueError) as e:
-                logging.error(f"Kural değerlendirme hatası. Fact: {fact_name}, Actual: {actual_value}, Expected: {expected_value}. Hata: {e}")
+                logging.error(f"Kural değerlendirme hatası (Tip Uyuşmazlığı). Fact: {fact_name}, Actual: {actual_value}, Expected: {expected_value}. Hata: {e}")
                 return False
         return True
 
-class WorkflowOrchestrator:
+import importlib.util # For dynamic module loading
+from session_manager import SessionManager
+# version_control will be used by specific modules like exporter, not directly by the orchestrator loop
+
+class ProfileManager:
+    """Loads and manages inheritable profiles from csv_profiles.json."""
     def __init__(self):
+        profiles_data = load_json("csv_profiles.json")
+        self.profiles = profiles_data.get("profiles", {}) if profiles_data else {}
+        logging.info("Profil Yöneticisi başlatıldı.")
+
+    def get_merged_profile(self, profile_name):
+        """Merges a specific profile with its base profile using inheritance."""
+        if profile_name not in self.profiles:
+            logging.error(f"Profil bulunamadı: {profile_name}")
+            return None
+
+        profile = self.profiles[profile_name].copy()
+        base_name = profile.get("inherits")
+
+        if base_name and base_name in self.profiles:
+            base_profile = self.profiles[base_name].copy()
+            # The specific profile's values overwrite the base profile's values
+            merged = {**base_profile, **profile}
+            return merged
+        return profile
+
+class DBManager:
+    """Manages interactions with the flat-file JSON database."""
+    def load_db(self, filename):
+        """Loads a JSON database file."""
+        logging.info(f"Veritabanı yükleniyor: {filename}")
+        return load_json(filename)
+
+    def save_db(self, filename, data):
+        """Saves data to a JSON database file."""
+        try:
+            with open(filename, 'w', encoding='utf-8') as f:
+                json.dump(data, f, indent=2, ensure_ascii=False)
+            logging.info(f"Veritabanı başarıyla kaydedildi: {filename}")
+        except Exception as e:
+            logging.error(f"Veritabanı kaydedilemedi: {filename}. Hata: {e}")
+
+class WorkflowOrchestrator:
+    """Orchestrates the entire workflow based on a configuration file."""
+    def __init__(self):
+        self.policy = self._load_policy("orchestrator_policy.json")
+        log_level = self.policy.get("logging", {}).get("level", "INFO").upper()
+        logging.getLogger().setLevel(log_level)
+
+        self.session = SessionManager(self.policy.get("session"))
+
         self.workflow_schema = load_json("workflow_schema_v2.json")
         contracts_data = load_json("data_contracts.json")
         self.contracts = contracts_data.get("contracts", {}) if contracts_data else {}
         self.context = {}
         self.rule_engine = RuleEngine()
-        logging.info("Orkestratör başlatıldı ve Veri Sözleşmeleri yüklendi.")
+        self.profile_manager = ProfileManager()
+        self.db_manager = DBManager()
+        logging.info("Orkestratör başlatıldı: Policy, Session, DBManager, Contracts yüklendi.")
+
+    def _load_policy(self, policy_file):
+        """Loads operational policies from the specified file."""
+        policy_data = load_json(policy_file)
+        if not policy_data:
+            logging.warning(f"Politika dosyası bulunamadı veya boş: {policy_file}. Varsayılan politikalar kullanılıyor.")
+            # Return safe defaults
+            return {
+                "execution": {"stop_on_error": True, "stop_on_contract_violation": True},
+                "logging": {"level": "INFO"}
+            }
+        return policy_data
 
     def validate_data_contract(self, contract_name, data):
+        """Validates output data against a specified data contract."""
         if contract_name not in self.contracts:
             logging.error(f"Veri sözleşmesi bulunamadı: {contract_name}")
             return False
+
         contract_schema = self.contracts[contract_name]
         logging.info(f"Sözleşme doğrulanıyor: {contract_name}")
         return validate_against_schema(data, contract_schema, contract_name)
 
     def load_module(self, module_file):
+        """Dynamically loads and instantiates a class from a Python module."""
         try:
             module_name = module_file.replace('.py', '')
             class_name = "".join(word.capitalize() for word in module_name.split('_'))
+
             spec = importlib.util.spec_from_file_location(module_name, module_file)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
+
             return getattr(module, class_name)()
         except Exception as e:
             logging.error(f"Modül yüklenemedi: {module_file}. Hata: {e}")
             return None
 
     def resolve_inputs(self, inputs, context):
-        resolved = {}
-        for key, value in inputs.items():
-            if isinstance(value, dict) and "$ref" in value:
-                ref_path = value["$ref"]
+        """
+        Recursively resolves $ref and $profile pointers in input definitions.
+        """
+        if isinstance(inputs, dict):
+            # First, check if the dictionary itself is a special reference
+            if "$ref" in inputs:
+                ref_path = inputs["$ref"]
                 if ref_path.startswith("context."):
                     try:
+                        # Resolve the path from the context object
                         temp_context = context
                         for part in ref_path.split('.')[1:]:
                             temp_context = temp_context[part]
-                        resolved[key] = temp_context
-                    except (KeyError, TypeError):
-                        logging.warning(f"Referans çözümlenemedi: {ref_path}")
-                        resolved[key] = None
-                else:
-                    resolved[key] = value
-            else:
-                resolved[key] = value
-        return resolved
+                        logging.info(f"Referans ($ref) çözümlendi: '{ref_path}'")
+                        return temp_context
+                    except (KeyError, TypeError) as e:
+                        logging.warning(f"Referans ($ref) çözümlenemedi: {ref_path}. Hata: {e}")
+                        return None
+                return inputs # Return as-is if not a context ref
+
+            if "$profile" in inputs:
+                profile_name = inputs["$profile"]
+                logging.info(f"Profil ($profile) çözümleniyor: '{profile_name}'")
+                return self.profile_manager.get_merged_profile(profile_name)
+
+            # If it's a regular dictionary, recurse through its values
+            resolved_dict = {}
+            for key, value in inputs.items():
+                resolved_dict[key] = self.resolve_inputs(value, context)
+            return resolved_dict
+
+        elif isinstance(inputs, list):
+            # If it's a list, recurse through its items
+            return [self.resolve_inputs(item, context) for item in inputs]
+
+        # Base case: the item is a primitive (str, int, etc.), so return it directly
+        return inputs
 
     def run(self, config_file):
+        """Loads and executes the workflow from a configuration file."""
         config_data = load_json(config_file)
         if not config_data:
             return
+
+        # 1. Validate schema
         if not (self.workflow_schema and validate_against_schema(config_data, self.workflow_schema, "Workflow Schema V2")):
             logging.error("İş akışı başlatılamadı (Şema doğrulaması başarısız).")
             return
+
         logging.info(f"İş akışı başlatılıyor: {config_data['workflow_id']}")
-        for step in config_data["steps"]:
-            step_id = step['id']
+
+        # 2. Step Execution Loop
+        for step in config_data.get("steps", []):
+            step_id = step.get('id', 'N/A')
             logging.info(f"--- Adım: {step_id} ---")
-            ruleset_name = step["rs"].get("ruleset_name")
+
+            # PRE-STEP CHECK: Check session status before every step
+            session_status, message = self.session.check_status()
+            if session_status != "STATUS_OK":
+                logging.error(f"İş akışı durduruldu (Session Status: {session_status}): {message}")
+                break
+
+            # 2a. Evaluate Rules
+            ruleset_name = step.get("rs", {}).get("ruleset_name")
             if not self.rule_engine.evaluate(ruleset_name, self.context):
                 logging.info(f"Adım {step_id} atlandı (Kurallar geçmedi).")
                 continue
+
+            # 2b. Load Module
             module_instance = self.load_module(step["module"])
             if not module_instance:
-                break
-            raw_inputs = step["i"]
+                if self.policy.get("execution", {}).get("stop_on_error", True):
+                    logging.error("Politika gereği (stop_on_error=True) modül yüklenemediği için iş akışı durduruluyor.")
+                    break
+                else:
+                    continue
+
+            # 2c. Prepare and Resolve Inputs
+            raw_inputs = step.get("i", {})
             resolved_inputs = self.resolve_inputs(raw_inputs, self.context)
+
+            # 2d. Execute Module
             try:
-                output = module_instance.execute(resolved_inputs, self.context)
+                # Standardized execution: All modules receive inputs, context, and the db_manager
+                output = module_instance.execute(resolved_inputs, self.context, self.db_manager)
             except Exception as e:
                 logging.error(f"Adım {step_id} yürütülürken hata: {e}")
-                break
-            contract_name = step["o"].get("contract")
-            if contract_name and not self.validate_data_contract(contract_name, output):
-                logging.error(f"Adım {step_id} başarısız oldu (Sözleşme ihlali). İş akışı durduruluyor.")
-                break
-            context_key = step["o"].get("context_key")
+                if self.policy.get("execution", {}).get("stop_on_error", True):
+                    logging.error("Politika gereği (stop_on_error=True) iş akışı durduruluyor.")
+                    break
+                else:
+                    continue
+
+            # 2e. Validate Output Contract
+            contract_name = step.get("o", {}).get("contract")
+            is_contract_valid = True
+            if contract_name:
+                is_contract_valid = self.validate_data_contract(contract_name, output)
+
+            if not is_contract_valid:
+                logging.error(f"Adım {step_id} başarısız oldu (Sözleşme ihlali).")
+                if self.policy.get("execution", {}).get("stop_on_contract_violation", True):
+                    logging.error("Politika gereği (stop_on_contract_violation=True) iş akışı durduruluyor.")
+                    break
+                else:
+                    continue
+
+            # 2f. Update Context
+            context_key = step.get("o", {}).get("context_key")
             if context_key:
                 self.context[context_key] = output
+                logging.info(f"'{context_key}' anahtarı context'e eklendi.")
+
+            self.session.log_update() # Log that a step was successfully completed
             logging.info(f"Adım {step_id} tamamlandı.")
 
 if __name__ == "__main__":
+    # This block now runs the final, end-to-end workflow configuration.
+
+    # Ensure a clean knowledge base for the run.
+    # A real run might persist this, but for a clean test, we start fresh.
+    with open("knowledge_base.json", "w", encoding='utf-8') as f:
+        json.dump({"keyword_performance_weights": {}}, f)
+
     orchestrator = WorkflowOrchestrator()
+    print("--- Final End-to-End Workflow Verification ---")
     orchestrator.run("finalv2_config.json")
-    print("\nİş Akışı Tamamlandı. Son Bağlam (Context):")
+
+    print("\n--- Workflow Complete. Final Context: ---")
     print(json.dumps(orchestrator.context, indent=2, ensure_ascii=False))
+
+    print("\n--- Final State of Knowledge Base: ---")
+    with open("knowledge_base.json", "r", encoding='utf-8') as f:
+        final_kb = json.load(f)
+        print(json.dumps(final_kb, indent=2, ensure_ascii=False))
+
+    # Clean up dummy files created during the run
+    import os
+    if os.path.exists("knowledge_base.json"):
+        os.remove("knowledge_base.json")
+    if os.path.exists("finalv2_config.json"):
+        os.remove("finalv2_config.json")
+    if os.path.exists("images"):
+        import shutil
+        shutil.rmtree("images")

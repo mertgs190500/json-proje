@@ -50,6 +50,25 @@
             "benefitDrivenPhrases": {"type": "array", "items": {"type": "string"}}
         },
         "required": ["positiveThemes", "negativeThemes", "benefitDrivenPhrases"]
+    },
+    "StrategicPackagingData": {
+        "description": "Listeleme Nitelikleri ve Etsy Ads Stratejisi çıktıları.",
+        "type": "object",
+        "properties": {
+            "attributes": {
+                "type": "object",
+                "description": "Seçilen Etsy Nitelikleri (Renk, Materyal, Stil vb.)"
+            },
+            "ads_strategy": {
+                "type": "object",
+                "properties": {
+                    "positive_priority_keywords": {"type": "array", "items": {"type": "string"}},
+                    "negative_keywords": {"type": "array", "items": {"type": "string"}}
+                },
+                "required": ["positive_priority_keywords", "negative_keywords"]
+            }
+        },
+        "required": ["attributes", "ads_strategy"]
     }
   }
 }

@@ -1,31 +1,31 @@
 import logging
 
 class VocAnalyzer:
-    def execute(self, inputs, context):
+    def execute(self, inputs, context, db_manager=None):
         """
-        Müşteri yorumlarını analiz eder (NLP Simülasyonu).
+        Analyzes customer reviews (NLP Simulation).
         """
         reviews = inputs.get("reviews", [])
-        logging.info(f"[VocAnalyzer] {len(reviews)} yorum analiz ediliyor.")
+        logging.info(f"[VocAnalyzer] Analyzing {len(reviews)} reviews.")
 
-        # Basit anahtar kelime tabanlı duygu analizi simülasyonu
+        # Simple keyword-based sentiment analysis simulation
         positive = set()
         negative = set()
         phrases = []
 
         for review in reviews:
             text = review.lower()
-            if "hızlı kargo" in text or "mükemmel kalite" in text:
-                positive.add("Kalite ve Hız")
-                phrases.append("Hızlı kargo garantisiyle sunulan üstün kalite.")
-            if "beklediğimden küçük" in text or "rengi soluk" in text:
-                negative.add("Boyut/Renk Beklentisi")
-                phrases.append("Canlı renkler ve net boyut bilgisi için fotoğrafları inceleyin.")
+            if "fast shipping" in text or "excellent quality" in text:
+                positive.add("Quality & Speed")
+                phrases.append("Superior quality with the promise of fast shipping.")
+            if "smaller than expected" in text or "color is pale" in text:
+                negative.add("Size/Color Expectation")
+                phrases.append("Please review photos for vibrant colors and clear size information.")
 
         output = {
             "positiveThemes": list(positive),
             "negativeThemes": list(negative),
             "benefitDrivenPhrases": list(set(phrases))
         }
-        logging.info("[VocAnalyzer] Analiz tamamlandı.")
+        logging.info("[VocAnalyzer] Analysis complete.")
         return output

@@ -15,30 +15,44 @@
     "WorkflowStep": {
       "type": "object",
       "properties": {
-        "id": {"type": "string"},
+        "id": {"type": "string", "description": "Benzersiz adım kimliği."},
         "name": {"type": "string"},
         "module": {
           "description": "Bu adımı çalıştıracak Python modülünün dosya adı.",
           "type": "string"
         },
-        "i": {"type": "object"},
-        "o": {"type": "object"},
-        "rs": {"type": "object"},
+        "i": {
+          "type": "object",
+          "description": "Adımın girdileri (Sabit değerler veya $ref referansları)."
+        },
+        "o": {
+          "type": "object",
+          "required": ["context_key"],
+          "properties": {
+            "context_key": {"type": "string", "description": "Çıktının context'te saklanacağı anahtar."},
+            "contract": {"type": "string", "description": "data_contracts.json referansı."}
+          }
+        },
+        "rs": {
+          "type": "object",
+          "required": ["ruleset_name"],
+          "properties": {
+            "ruleset_name": {"type": "string", "description": "rule_definitions.json referansı."}
+          }
+        },
         "meta": {
-          "$ref": "#/definitions/MetadataBlock"
+          "type": "object",
+          "description": "Adımın amacı ve geçmişi (Rapor 3.3).",
+          "required": ["description", "author", "last_updated"],
+          "properties": {
+              "description": {"type": "string"},
+              "author": {"type": "string"},
+              "version": {"type": "string"},
+              "last_updated": {"type": "string", "format": "date-time"}
+          }
         }
       },
       "required": ["id", "name", "module", "i", "o", "rs", "meta"]
-    },
-    "MetadataBlock": {
-        "type": "object",
-        "properties": {
-            "description": {"type": "string"},
-            "author": {"type": "string"},
-            "version": {"type": "string"},
-            "last_updated": {"type": "string", "format": "date-time"}
-        },
-        "required": ["description", "author", "last_updated"]
     }
   }
 }
