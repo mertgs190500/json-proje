@@ -82,6 +82,47 @@
             }
         },
         "required": ["status", "message", "data"]
+    },
+    "MarketAnalysisOutput": {
+        "description": "Pazar analizi modülünün çıktısını tanımlar.",
+        "type": "object",
+        "properties": {
+            "popular_listings_analysis": {
+                "type": "object",
+                "properties": {
+                    "top_keywords": { "type": "array", "items": { "type": "string" } },
+                    "average_price": { "type": "number" },
+                    "average_views": { "type": "number" }
+                },
+                "required": ["top_keywords", "average_price", "average_views"]
+            },
+            "competitor_analysis": {
+                "type": "object",
+                "properties": {
+                    "top_competitors_by_sales": { "type": "array", "items": { "type": "string" } },
+                    "common_tags": { "type": "array", "items": { "type": "string" } }
+                },
+                "required": ["top_competitors_by_sales", "common_tags"]
+            },
+            "market_insights": {
+                "type": "object",
+                "properties": {
+                    "niche_opportunities": { "type": "array", "items": { "type": "string" } },
+                    "pricing_summary": {
+                        "type": "object",
+                        "properties": {
+                            "min": { "type": "number" },
+                            "max": { "type": "number" },
+                            "mean": { "type": "number" },
+                            "median": { "type": "number" }
+                        },
+                        "required": ["min", "max", "mean", "median"]
+                    }
+                },
+                "required": ["niche_opportunities", "pricing_summary"]
+            }
+        },
+        "required": ["popular_listings_analysis", "competitor_analysis", "market_insights"]
     }
   }
 }
