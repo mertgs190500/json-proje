@@ -3,9 +3,15 @@ import jsonschema
 from jsonschema import validate
 import logging
 import operator
+import importlib.util
+import os
+import glob
+from session_manager import SessionManager
 
+# --- CONFIGURATION ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
+# --- UTILITY FUNCTIONS ---
 def load_json(filename):
     """Loads a JSON file with UTF-8 encoding."""
     try:
@@ -28,52 +34,36 @@ def validate_against_schema(data, schema, schema_name="Genel"):
         logging.error(f"DOĞRULAMA HATASI ({schema_name}): {err.message}")
         return False
 
+# --- CORE CLASSES ---
 class RuleEngine:
     """Evaluates declarative rules from rule_definitions.json."""
     def __init__(self):
-        self.operators = {
-            "equal": operator.eq,
-            "greaterThan": operator.gt,
-            "lessThan": operator.lt,
-        }
+        self.operators = {"equal": operator.eq, "greaterThan": operator.gt, "lessThan": operator.lt}
         rules_data = load_json("rule_definitions.json")
         self.rulesets = rules_data.get("rulesets", {}) if rules_data else {}
         logging.info("Kural Motoru başlatıldı ve kurallar yüklendi.")
 
     def evaluate(self, ruleset_name, facts):
         """Evaluates a specific ruleset against given facts."""
+        if not ruleset_name:
+            logging.warning("Kural seti adı belirtilmemiş, atlanıyor.")
+            return False # Should not proceed if rule name is missing
         if ruleset_name not in self.rulesets:
             logging.error(f"Kural seti bulunamadı: {ruleset_name}")
             return False
-
         logic = self.rulesets[ruleset_name].get("logic", {})
         conditions = logic.get("conditions", {}).get("all", [])
-
-        if not conditions:
-            return True  # No conditions means the rule passes (e.g., AlwaysRun)
-
+        if not conditions: return True
         for condition in conditions:
-            fact_name = condition.get("fact")
-            op_name = condition.get("operator")
-            expected_value = condition.get("value")
+            fact_name, op_name, expected_value = condition.get("fact"), condition.get("operator"), condition.get("value")
             actual_value = facts.get(fact_name)
-
             if op_name not in self.operators:
-                logging.error(f"Bilinmeyen operatör: {op_name}")
-                return False
-
-            op_func = self.operators[op_name]
+                logging.error(f"Bilinmeyen operatör: {op_name}"); return False
             try:
-                if not op_func(actual_value, expected_value):
-                    return False
+                if not self.operators[op_name](actual_value, expected_value): return False
             except (TypeError, ValueError) as e:
-                logging.error(f"Kural değerlendirme hatası (Tip Uyuşmazlığı). Fact: {fact_name}, Actual: {actual_value}, Expected: {expected_value}. Hata: {e}")
-                return False
+                logging.error(f"Kural değerlendirme hatası (Tip Uyuşmazlığı). Fact: {fact_name}, Hata: {e}"); return False
         return True
-
-import importlib.util # For dynamic module loading
-from session_manager import SessionManager
-# version_control will be used by specific modules like exporter, not directly by the orchestrator loop
 
 class ProfileManager:
     """Loads and manages inheritable profiles from csv_profiles.json."""
@@ -85,28 +75,18 @@ class ProfileManager:
     def get_merged_profile(self, profile_name):
         """Merges a specific profile with its base profile using inheritance."""
         if profile_name not in self.profiles:
-            logging.error(f"Profil bulunamadı: {profile_name}")
-            return None
-
+            logging.error(f"Profil bulunamadı: {profile_name}"); return None
         profile = self.profiles[profile_name].copy()
         base_name = profile.get("inherits")
-
         if base_name and base_name in self.profiles:
             base_profile = self.profiles[base_name].copy()
-            # The specific profile's values overwrite the base profile's values
-            merged = {**base_profile, **profile}
-            return merged
+            return {**base_profile, **profile}
         return profile
 
 class DBManager:
     """Manages interactions with the flat-file JSON database."""
-    def load_db(self, filename):
-        """Loads a JSON database file."""
-        logging.info(f"Veritabanı yükleniyor: {filename}")
-        return load_json(filename)
-
+    def load_db(self, filename): return load_json(filename)
     def save_db(self, filename, data):
-        """Saves data to a JSON database file."""
         try:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
@@ -115,203 +95,177 @@ class DBManager:
             logging.error(f"Veritabanı kaydedilemedi: {filename}. Hata: {e}")
 
 class WorkflowOrchestrator:
-    """Orchestrates the entire workflow based on a configuration file."""
+    """Orchestrates the entire workflow based on a configuration file or dictionary."""
     def __init__(self):
-        self.policy = self._load_policy("orchestrator_policy.json")
-        log_level = self.policy.get("logging", {}).get("level", "INFO").upper()
-        logging.getLogger().setLevel(log_level)
-
+        self.policy = load_json("orchestrator_policy.json") or {}
+        logging.getLogger().setLevel(self.policy.get("logging", {}).get("level", "INFO").upper())
         self.session = SessionManager(self.policy.get("session"))
-
         self.workflow_schema = load_json("workflow_schema_v2.json")
-        contracts_data = load_json("data_contracts.json")
-        self.contracts = contracts_data.get("contracts", {}) if contracts_data else {}
+        self.contracts = (load_json("data_contracts.json") or {}).get("contracts", {})
         self.context = {}
         self.rule_engine = RuleEngine()
         self.profile_manager = ProfileManager()
         self.db_manager = DBManager()
-        logging.info("Orkestratör başlatıldı: Policy, Session, DBManager, Contracts yüklendi.")
-
-    def _load_policy(self, policy_file):
-        """Loads operational policies from the specified file."""
-        policy_data = load_json(policy_file)
-        if not policy_data:
-            logging.warning(f"Politika dosyası bulunamadı veya boş: {policy_file}. Varsayılan politikalar kullanılıyor.")
-            # Return safe defaults
-            return {
-                "execution": {"stop_on_error": True, "stop_on_contract_violation": True},
-                "logging": {"level": "INFO"}
-            }
-        return policy_data
+        logging.info("Orkestratör başlatıldı.")
 
     def validate_data_contract(self, contract_name, data):
-        """Validates output data against a specified data contract."""
         if contract_name not in self.contracts:
-            logging.error(f"Veri sözleşmesi bulunamadı: {contract_name}")
-            return False
-
-        contract_schema = self.contracts[contract_name]
+            logging.error(f"Veri sözleşmesi bulunamadı: {contract_name}"); return False
         logging.info(f"Sözleşme doğrulanıyor: {contract_name}")
-        return validate_against_schema(data, contract_schema, contract_name)
+        return validate_against_schema(data, self.contracts[contract_name], contract_name)
 
     def load_module(self, module_file):
-        """Dynamically loads and instantiates a class from a Python module."""
         try:
             module_name = module_file.replace('.py', '')
             class_name = "".join(word.capitalize() for word in module_name.split('_'))
-
             spec = importlib.util.spec_from_file_location(module_name, module_file)
             module = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(module)
-
             return getattr(module, class_name)()
         except Exception as e:
-            logging.error(f"Modül yüklenemedi: {module_file}. Hata: {e}")
-            return None
+            logging.error(f"Modül yüklenemedi: {module_file}. Hata: {e}"); return None
 
     def resolve_inputs(self, inputs, context):
-        """
-        Recursively resolves $ref and $profile pointers in input definitions.
-        """
         if isinstance(inputs, dict):
-            # First, check if the dictionary itself is a special reference
             if "$ref" in inputs:
                 ref_path = inputs["$ref"]
-                if ref_path.startswith("context."):
-                    try:
-                        # Resolve the path from the context object
-                        temp_context = context
-                        for part in ref_path.split('.')[1:]:
-                            temp_context = temp_context[part]
-                        logging.info(f"Referans ($ref) çözümlendi: '{ref_path}'")
-                        return temp_context
-                    except (KeyError, TypeError) as e:
-                        logging.warning(f"Referans ($ref) çözümlenemedi: {ref_path}. Hata: {e}")
-                        return None
-                return inputs # Return as-is if not a context ref
-
+                try:
+                    val = context
+                    for part in ref_path.split('.')[1:]: val = val[part]
+                    logging.info(f"Referans ($ref) çözümlendi: '{ref_path}'")
+                    return val
+                except (KeyError, TypeError) as e:
+                    logging.warning(f"Referans ($ref) çözümlenemedi: {ref_path}. Hata: {e}"); return None
             if "$profile" in inputs:
                 profile_name = inputs["$profile"]
                 logging.info(f"Profil ($profile) çözümleniyor: '{profile_name}'")
                 return self.profile_manager.get_merged_profile(profile_name)
-
-            # If it's a regular dictionary, recurse through its values
-            resolved_dict = {}
-            for key, value in inputs.items():
-                resolved_dict[key] = self.resolve_inputs(value, context)
-            return resolved_dict
-
+            return {k: self.resolve_inputs(v, context) for k, v in inputs.items()}
         elif isinstance(inputs, list):
-            # If it's a list, recurse through its items
             return [self.resolve_inputs(item, context) for item in inputs]
-
-        # Base case: the item is a primitive (str, int, etc.), so return it directly
         return inputs
 
-    def run(self, config_file):
-        """Loads and executes the workflow from a configuration file."""
-        config_data = load_json(config_file)
-        if not config_data:
-            return
+    def run(self, config):
+        """Loads and executes the workflow from a configuration file path or a dictionary."""
+        if isinstance(config, str):
+            config_data = load_json(config)
+        elif isinstance(config, dict):
+            config_data = config
+        else:
+            logging.error("Geçersiz yapılandırma. Dosya yolu (str) veya sözlük (dict) olmalıdır."); return
 
-        # 1. Validate schema
-        if not (self.workflow_schema and validate_against_schema(config_data, self.workflow_schema, "Workflow Schema V2")):
-            logging.error("İş akışı başlatılamadı (Şema doğrulaması başarısız).")
-            return
+        if not config_data: logging.error("İş akışı yapılandırması yüklenemedi."); return
+        if self.workflow_schema and not validate_against_schema(config_data, self.workflow_schema, "Workflow Schema V2"):
+             logging.error("İş akışı şema doğrulaması başarısız oldu."); return
 
-        logging.info(f"İş akışı başlatılıyor: {config_data['workflow_id']}")
-
-        # 2. Step Execution Loop
+        logging.info(f"İş akışı başlatılıyor: {config_data.get('workflow_id', 'N/A')}")
         for step in config_data.get("steps", []):
             step_id = step.get('id', 'N/A')
             logging.info(f"--- Adım: {step_id} ---")
 
-            # PRE-STEP CHECK: Check session status before every step
-            session_status, message = self.session.check_status()
-            if session_status != "STATUS_OK":
-                logging.error(f"İş akışı durduruldu (Session Status: {session_status}): {message}")
-                break
+            status, msg = self.session.check_status()
+            if status != "STATUS_OK": logging.error(f"İş akışı durduruldu (Session: {status}): {msg}"); break
 
-            # 2a. Evaluate Rules
             ruleset_name = step.get("rs", {}).get("ruleset_name")
-            if not self.rule_engine.evaluate(ruleset_name, self.context):
-                logging.info(f"Adım {step_id} atlandı (Kurallar geçmedi).")
-                continue
+            if ruleset_name and not self.rule_engine.evaluate(ruleset_name, self.context):
+                logging.info(f"Adım {step_id} atlandı (Kural '{ruleset_name}' geçmedi)."); continue
 
-            # 2b. Load Module
             module_instance = self.load_module(step["module"])
             if not module_instance:
-                if self.policy.get("execution", {}).get("stop_on_error", True):
-                    logging.error("Politika gereği (stop_on_error=True) modül yüklenemediği için iş akışı durduruluyor.")
-                    break
-                else:
-                    continue
+                if self.policy.get("execution", {}).get("stop_on_error", True): break
+                else: continue
 
-            # 2c. Prepare and Resolve Inputs
-            raw_inputs = step.get("i", {})
-            resolved_inputs = self.resolve_inputs(raw_inputs, self.context)
-
-            # 2d. Execute Module
+            resolved_inputs = self.resolve_inputs(step.get("i", {}), self.context)
             try:
-                # Standardized execution: All modules receive inputs, context, and the db_manager
                 output = module_instance.execute(resolved_inputs, self.context, self.db_manager)
             except Exception as e:
-                logging.error(f"Adım {step_id} yürütülürken hata: {e}")
-                if self.policy.get("execution", {}).get("stop_on_error", True):
-                    logging.error("Politika gereği (stop_on_error=True) iş akışı durduruluyor.")
-                    break
-                else:
-                    continue
+                logging.error(f"Adım {step_id} yürütülürken hata: {e}", exc_info=True)
+                if self.policy.get("execution", {}).get("stop_on_error", True): break
+                else: continue
 
-            # 2e. Validate Output Contract
             contract_name = step.get("o", {}).get("contract")
-            is_contract_valid = True
-            if contract_name:
-                is_contract_valid = self.validate_data_contract(contract_name, output)
+            if contract_name and not self.validate_data_contract(contract_name, output):
+                if self.policy.get("execution", {}).get("stop_on_contract_violation", True): break
+                else: continue
 
-            if not is_contract_valid:
-                logging.error(f"Adım {step_id} başarısız oldu (Sözleşme ihlali).")
-                if self.policy.get("execution", {}).get("stop_on_contract_violation", True):
-                    logging.error("Politika gereği (stop_on_contract_violation=True) iş akışı durduruluyor.")
-                    break
-                else:
-                    continue
-
-            # 2f. Update Context
             context_key = step.get("o", {}).get("context_key")
             if context_key:
                 self.context[context_key] = output
                 logging.info(f"'{context_key}' anahtarı context'e eklendi.")
 
-            self.session.log_update() # Log that a step was successfully completed
+            self.session.log_update()
             logging.info(f"Adım {step_id} tamamlandı.")
 
 if __name__ == "__main__":
-    # This block now runs the final, end-to-end workflow configuration.
+    logging.info("CSV INGESTION PROCESS (CSV-INGEST-PROCESS-01) BAŞLATILIYOR...")
 
-    # Ensure a clean knowledge base for the run.
-    # A real run might persist this, but for a clean test, we start fresh.
-    with open("knowledge_base.json", "w", encoding='utf-8') as f:
-        json.dump({"keyword_performance_weights": {}}, f)
+    file_profile_map = {
+        "Similar_keywords*.csv": "similar_keywords_v2",
+        "Top_listings*.csv": "top_listings_title_first_v1",
+        "Listings*.csv": "listings_title_first_v1"
+    }
 
-    orchestrator = WorkflowOrchestrator()
-    print("--- Final End-to-End Workflow Verification ---")
-    orchestrator.run("finalv2_config.json")
+    files_to_process = [f for pattern in file_profile_map for f in glob.glob(f"./{pattern}")]
 
-    print("\n--- Workflow Complete. Final Context: ---")
-    print(json.dumps(orchestrator.context, indent=2, ensure_ascii=False))
+    if not files_to_process:
+        logging.warning("Kök dizinde işlenecek CSV dosyası bulunamadı. (Örn: Similar_keywords*.csv)")
+    else:
+        logging.info(f"İşlenecek dosyalar bulundu: {files_to_process}")
+        orchestrator = WorkflowOrchestrator()
 
-    print("\n--- Final State of Knowledge Base: ---")
-    with open("knowledge_base.json", "r", encoding='utf-8') as f:
-        final_kb = json.load(f)
-        print(json.dumps(final_kb, indent=2, ensure_ascii=False))
+        for file_path in files_to_process:
+            profile_name = next((p for pattern, p in file_profile_map.items() if glob.fnmatch.fnmatch(os.path.basename(file_path), pattern)), None)
+            if not profile_name:
+                logging.warning(f"'{file_path}' için uygun profil bulunamadı. Atlanıyor.")
+                continue
 
-    # Clean up dummy files created during the run
-    # import os
-    # if os.path.exists("knowledge_base.json"):
-    #     os.remove("knowledge_base.json")
-    # if os.path.exists("finalv2_config.json"):
-    #     os.remove("finalv2_config.json")
-    # if os.path.exists("images"):
-    #     import shutil
-    #     shutil.rmtree("images")
+            logging.info(f"\n>>> '{os.path.basename(file_path)}' için iş akışı başlatılıyor (Profil: {profile_name}) <<<")
+
+            dynamic_workflow = {
+                "workflow_id": f"ingest_{os.path.basename(file_path)}",
+                "steps": [
+                    {
+                        "id": f"load_{os.path.basename(file_path)}",
+                        "name": f"Load CSV: {os.path.basename(file_path)}",
+                        "module": "data_loader.py",
+                        "i": {"file_path": file_path},
+                        "o": {"context_key": "current_csv_data"},
+                        "rs": {"ruleset_name": "AlwaysRun"},
+                        "meta": {
+                            "description": "Loads the raw content of a CSV file for processing.",
+                            "author": "Jules",
+                            "last_updated": "2025-10-02T12:00:00Z"
+                        }
+                    },
+                    {
+                        "id": f"ingest_{os.path.basename(file_path)}",
+                        "name": f"Ingest CSV: {os.path.basename(file_path)}",
+                        "module": "csv_ingestor.py",
+                        "i": {
+                            "raw_content": {"$ref": "context.current_csv_data.raw_content"},
+                            "file_path": {"$ref": "context.current_csv_data.file_path"},
+                            "resolved_profile": {"$profile": profile_name}
+                        },
+                        "o": {"context_key": f"processed_{os.path.basename(file_path)}"},
+                        "rs": {"ruleset_name": "AlwaysRun"},
+                        "meta": {
+                            "description": "Parses, cleans, and validates CSV data using a profile.",
+                            "author": "Jules",
+                            "last_updated": "2025-10-02T12:00:00Z"
+                        }
+                    }
+                ]
+            }
+            orchestrator.run(dynamic_workflow)
+
+        logging.info("\n--- TÜM CSV İŞLEME AKIŞLARI TAMAMLANDI ---")
+        print("\n--- Final Context Özeti: ---")
+        final_context_summary = {}
+        for key, value in orchestrator.context.items():
+            if key.startswith("processed_") and isinstance(value, dict):
+                final_context_summary[key] = {
+                    "status": value.get('status'),
+                    "message": value.get('message'),
+                    "processed_rows": len(value.get('data', [])) if value.get('data') is not None else 0,
+                }
+        print(json.dumps(final_context_summary, indent=2, ensure_ascii=False))

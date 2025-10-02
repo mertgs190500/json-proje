@@ -61,6 +61,27 @@
                 "version": "1.0",
                 "last_updated": "2025-10-02T12:50:00Z"
             }
+        },
+        {
+            "id": "analyze_market_data",
+            "name": "Analyze Market Data",
+            "module": "market_analyzer.py",
+            "rs": { "ruleset_name": "AlwaysRun" },
+            "i": {
+                "popular_listings_data": { "$ref": "context.top_listings_data.data" },
+                "competitor_listings_data": { "$ref": "context.general_listings_data.data" },
+                "similar_keywords_data": { "$ref": "context.similar_keywords_data.data" }
+            },
+            "o": {
+                "contract": "MarketAnalysisOutput",
+                "context_key": "market_analysis_results"
+            },
+            "meta": {
+                "description": "Performs a full market analysis based on the ingested CSV data.",
+                "author": "Jules",
+                "version": "1.0",
+                "last_updated": "2025-10-02T13:03:00Z"
+            }
         }
     ]
 }
