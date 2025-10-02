@@ -1,0 +1,58 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "EtsyWorkflowV2",
+  "description": "Etsy SEO Otomasyon İş Akışı v2 yapısını tanımlar.",
+  "type": "object",
+  "properties": {
+    "workflow_id": {"type": "string"},
+    "steps": {
+        "type": "array",
+        "items": {"$ref": "#/definitions/WorkflowStep"}
+    }
+  },
+  "required": ["workflow_id", "steps"],
+  "definitions": {
+    "WorkflowStep": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string", "description": "Benzersiz adım kimliği."},
+        "name": {"type": "string"},
+        "module": {
+          "description": "Bu adımı çalıştıracak Python modülünün dosya adı.",
+          "type": "string"
+        },
+        "i": {
+          "type": "object",
+          "description": "Adımın girdileri (Sabit değerler veya $ref referansları)."
+        },
+        "o": {
+          "type": "object",
+          "required": ["context_key"],
+          "properties": {
+            "context_key": {"type": "string", "description": "Çıktının context'te saklanacağı anahtar."},
+            "contract": {"type": "string", "description": "data_contracts.json referansı."}
+          }
+        },
+        "rs": {
+          "type": "object",
+          "required": ["ruleset_name"],
+          "properties": {
+            "ruleset_name": {"type": "string", "description": "rule_definitions.json referansı."}
+          }
+        },
+        "meta": {
+          "type": "object",
+          "description": "Adımın amacı ve geçmişi (Rapor 3.3).",
+          "required": ["description", "author", "last_updated"],
+          "properties": {
+              "description": {"type": "string"},
+              "author": {"type": "string"},
+              "version": {"type": "string"},
+              "last_updated": {"type": "string", "format": "date-time"}
+          }
+        }
+      },
+      "required": ["id", "name", "module", "i", "o", "rs", "meta"]
+    }
+  }
+}

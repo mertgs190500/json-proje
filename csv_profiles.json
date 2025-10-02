@@ -1,0 +1,16 @@
+{
+  "profiles": {
+    "BaseCsvProfile": {
+      "description": "Default settings for all CSV files.",
+      "delimiter_probe": [",", ";", "\t", "|"],
+      "encoding": ["utf-8", "utf-8-sig", "latin-1"],
+      "header_canonical": true
+    },
+    "CompetitorCsvProfile": {
+      "inherits": "BaseCsvProfile",
+      "description": "Specific profile for competitor data CSVs.",
+      "dedupe_on": ["URL"],
+      "required_fields": ["Title", "URL", "Shop"]
+    }
+  }
+}

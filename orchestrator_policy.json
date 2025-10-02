@@ -1,0 +1,12 @@
+{
+  "execution": {
+    "stop_on_error": true,
+    "stop_on_contract_violation": true
+  },
+  "security": {
+    "sandbox_mode": false
+  },
+  "logging": {
+    "level": "INFO"
+  }
+}

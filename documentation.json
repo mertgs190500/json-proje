@@ -1,0 +1,23 @@
+{
+  "documentation": {
+    "title": "Etsy SEO Automation Workflow v2 - User Guide",
+    "admin": {
+      "restore_flow": [
+        "Step 1:...",
+        "Step 2:..."
+      ],
+      "unlock_flow": [
+        "Step 1:...",
+        "Step 2:..."
+      ]
+    },
+    "assets": {
+      "visual_examples": {
+        "guides": {
+          "detail": ["Close-up shots of the surface texture..."],
+          "lifestyle": ["Usage on hand/finger..."]
+        }
+      }
+    }
+  }
+}
