@@ -11,6 +11,26 @@
       "description": "Specific profile for competitor data CSVs.",
       "dedupe_on": ["URL"],
       "required_fields": ["Title", "URL", "Shop"]
+    },
+    "similar_keywords_v2": {
+      "inherits": "BaseCsvProfile",
+      "description": "Profile for 'Similar Keywords' CSV files. Assumes a standard comma delimiter and potential encoding issues.",
+      "na_values": ["", "#N/A", "#N/A N/A", "#NA", "-1.#IND", "-1.#QNAN", "-NaN", "-nan", "1.#IND", "1.#QNAN", "<NA>", "N/A", "NA", "NULL", "NaN", "n/a", "nan", "null"],
+      "required_fields": ["Keyword", "Search volume", "Competition"]
+    },
+    "top_listings_title_first_v1": {
+      "inherits": "BaseCsvProfile",
+      "description": "Profile for 'Top Listings' CSVs where the title is expected to be a primary field. Handles potential unnamed index column.",
+      "index_col": 0,
+      "na_values": ["", "NaN", "null"],
+      "required_fields": ["Title", "Price", "Tags"]
+    },
+    "listings_title_first_v1": {
+      "inherits": "BaseCsvProfile",
+      "description": "Profile for general 'Listings' CSVs. Similar to top_listings but may have different fields.",
+      "index_col": 0,
+      "na_values": ["", "NaN", "null"],
+      "required_fields": ["Title", "URL", "Sales"]
     }
   }
 }

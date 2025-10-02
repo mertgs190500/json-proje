@@ -69,6 +69,19 @@
             }
         },
         "required": ["attributes", "ads_strategy"]
+    },
+    "CsvIngestorOutput": {
+        "description": "Defines the structure for the output of the CsvIngestor module.",
+        "type": "object",
+        "properties": {
+            "status": { "type": "string", "enum": ["success", "error"] },
+            "message": { "type": "string" },
+            "data": {
+                "type": ["array", "null"],
+                "items": { "type": "object" }
+            }
+        },
+        "required": ["status", "message", "data"]
     }
   }
 }

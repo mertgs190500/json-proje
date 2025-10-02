@@ -307,11 +307,11 @@ if __name__ == "__main__":
         print(json.dumps(final_kb, indent=2, ensure_ascii=False))
 
     # Clean up dummy files created during the run
-    import os
-    if os.path.exists("knowledge_base.json"):
-        os.remove("knowledge_base.json")
-    if os.path.exists("finalv2_config.json"):
-        os.remove("finalv2_config.json")
-    if os.path.exists("images"):
-        import shutil
-        shutil.rmtree("images")
+    # import os
+    # if os.path.exists("knowledge_base.json"):
+    #     os.remove("knowledge_base.json")
+    # if os.path.exists("finalv2_config.json"):
+    #     os.remove("finalv2_config.json")
+    # if os.path.exists("images"):
+    #     import shutil
+    #     shutil.rmtree("images")
