@@ -1,30 +1,66 @@
 {
-  "workflow": {
+    "workflow_id": "final_end_to_end_v2",
+    "description": "Orchestrates the full data processing pipeline, including CSV ingestion and analysis.",
     "steps": [
-      {
-        "step_id": "load_product_data",
-        "module": "data_loader",
-        "class": "DataLoader",
-        "inputs": {
-          "file_path": "project_core/product_data.json"
+        {
+            "id": "ingest_similar_keywords",
+            "name": "Ingest Similar Keywords CSV",
+            "module": "csv_ingestor.py",
+            "rs": { "ruleset_name": "AlwaysRun" },
+            "i": {
+                "file_path": "Similar_keywords - 2025-08-10T113431.306.csv",
+                "resolved_profile": { "$profile": "similar_keywords_v2" }
+            },
+            "o": {
+                "contract": "CsvIngestorOutput",
+                "context_key": "similar_keywords_data"
+            },
+            "meta": {
+                "description": "Parses the Similar Keywords CSV file.",
+                "author": "Jules",
+                "version": "1.0",
+                "last_updated": "2025-10-02T12:50:00Z"
+            }
         },
-        "outputs": {
-          "contract": "ProductDataSource",
-          "context_alias": "product_data_source"
-        }
-      },
-      {
-        "step_id": "load_documentation_data",
-        "module": "data_loader",
-        "class": "DataLoader",
-        "inputs": {
-          "file_path": "project_core/documentation.json"
+        {
+            "id": "ingest_top_listings",
+            "name": "Ingest Top Listings CSV",
+            "module": "csv_ingestor.py",
+            "rs": { "ruleset_name": "AlwaysRun" },
+            "i": {
+                "file_path": "Top_listings (53).csv",
+                "resolved_profile": { "$profile": "top_listings_title_first_v1" }
+            },
+            "o": {
+                "contract": "CsvIngestorOutput",
+                "context_key": "top_listings_data"
+            },
+            "meta": {
+                "description": "Parses the Top Listings CSV file.",
+                "author": "Jules",
+                "version": "1.0",
+                "last_updated": "2025-10-02T12:50:00Z"
+            }
         },
-        "outputs": {
-          "contract": "DocumentationDataSource",
-          "context_alias": "documentation_data_source"
+        {
+            "id": "ingest_general_listings",
+            "name": "Ingest General Listings CSV",
+            "module": "csv_ingestor.py",
+            "rs": { "ruleset_name": "AlwaysRun" },
+            "i": {
+                "file_path": "Listings (31).csv",
+                "resolved_profile": { "$profile": "listings_title_first_v1" }
+            },
+            "o": {
+                "contract": "CsvIngestorOutput",
+                "context_key": "general_listings_data"
+            },
+            "meta": {
+                "description": "Parses the General Listings CSV file.",
+                "author": "Jules",
+                "version": "1.0",
+                "last_updated": "2025-10-02T12:50:00Z"
+            }
         }
-      }
     ]
-  }
 }
