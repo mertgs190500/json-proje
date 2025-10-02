@@ -1,0 +1,30 @@
+{
+  "workflow": {
+    "steps": [
+      {
+        "step_id": "load_product_data",
+        "module": "data_loader",
+        "class": "DataLoader",
+        "inputs": {
+          "file_path": "project_core/product_data.json"
+        },
+        "outputs": {
+          "contract": "ProductDataSource",
+          "context_alias": "product_data_source"
+        }
+      },
+      {
+        "step_id": "load_documentation_data",
+        "module": "data_loader",
+        "class": "DataLoader",
+        "inputs": {
+          "file_path": "project_core/documentation.json"
+        },
+        "outputs": {
+          "contract": "DocumentationDataSource",
+          "context_alias": "documentation_data_source"
+        }
+      }
+    ]
+  }
+}
