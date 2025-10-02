@@ -106,7 +106,8 @@ class WorkflowOrchestrator:
         self.rule_engine = RuleEngine()
         self.profile_manager = ProfileManager()
         self.db_manager = DBManager()
-        logging.info("Orkestratör başlatıldı.")
+        self.state = "IDLE"  # Olası durumlar: IDLE, WORKING
+        logging.info("Orkestratör başlatıldı. Durum: %s", self.state)
 
     def validate_data_contract(self, contract_name, data):
         if contract_name not in self.contracts:
@@ -147,54 +148,67 @@ class WorkflowOrchestrator:
 
     def run(self, config):
         """Loads and executes the workflow from a configuration file path or a dictionary."""
-        if isinstance(config, str):
-            config_data = load_json(config)
-        elif isinstance(config, dict):
-            config_data = config
-        else:
-            logging.error("Geçersiz yapılandırma. Dosya yolu (str) veya sözlük (dict) olmalıdır."); return
+        if self.state == "WORKING":
+            logging.warning(f"Orkestratör şu anda başka bir görevle meşgul. Yeni görev reddedildi.")
+            return
 
-        if not config_data: logging.error("İş akışı yapılandırması yüklenemedi."); return
-        if self.workflow_schema and not validate_against_schema(config_data, self.workflow_schema, "Workflow Schema V2"):
-             logging.error("İş akışı şema doğrulaması başarısız oldu."); return
+        self.state = "WORKING"
+        logging.info("Durum WORKING olarak değiştirildi.")
 
-        logging.info(f"İş akışı başlatılıyor: {config_data.get('workflow_id', 'N/A')}")
-        for step in config_data.get("steps", []):
-            step_id = step.get('id', 'N/A')
-            logging.info(f"--- Adım: {step_id} ---")
+        try:
+            if isinstance(config, str):
+                config_data = load_json(config)
+            elif isinstance(config, dict):
+                config_data = config
+            else:
+                logging.error("Geçersiz yapılandırma. Dosya yolu (str) veya sözlük (dict) olmalıdır."); return
 
-            status, msg = self.session.check_status()
-            if status != "STATUS_OK": logging.error(f"İş akışı durduruldu (Session: {status}): {msg}"); break
+            if not config_data:
+                logging.error("İş akışı yapılandırması yüklenemedi."); return
 
-            ruleset_name = step.get("rs", {}).get("ruleset_name")
-            if ruleset_name and not self.rule_engine.evaluate(ruleset_name, self.context):
-                logging.info(f"Adım {step_id} atlandı (Kural '{ruleset_name}' geçmedi)."); continue
+            if self.workflow_schema and not validate_against_schema(config_data, self.workflow_schema, "Workflow Schema V2"):
+                 logging.error("İş akışı şema doğrulaması başarısız oldu."); return
 
-            module_instance = self.load_module(step["module"])
-            if not module_instance:
-                if self.policy.get("execution", {}).get("stop_on_error", True): break
-                else: continue
+            logging.info(f"İş akışı başlatılıyor: {config_data.get('workflow_id', 'N/A')}")
+            for step in config_data.get("steps", []):
+                step_id = step.get('id', 'N/A')
+                logging.info(f"--- Adım: {step_id} ---")
 
-            resolved_inputs = self.resolve_inputs(step.get("i", {}), self.context)
-            try:
-                output = module_instance.execute(resolved_inputs, self.context, self.db_manager)
-            except Exception as e:
-                logging.error(f"Adım {step_id} yürütülürken hata: {e}", exc_info=True)
-                if self.policy.get("execution", {}).get("stop_on_error", True): break
-                else: continue
+                status, msg = self.session.check_status()
+                if status != "STATUS_OK": logging.error(f"İş akışı durduruldu (Session: {status}): {msg}"); break
 
-            contract_name = step.get("o", {}).get("contract")
-            if contract_name and not self.validate_data_contract(contract_name, output):
-                if self.policy.get("execution", {}).get("stop_on_contract_violation", True): break
-                else: continue
+                ruleset_name = step.get("rs", {}).get("ruleset_name")
+                if ruleset_name and not self.rule_engine.evaluate(ruleset_name, self.context):
+                    logging.info(f"Adım {step_id} atlandı (Kural '{ruleset_name}' geçmedi)."); continue
 
-            context_key = step.get("o", {}).get("context_key")
-            if context_key:
-                self.context[context_key] = output
-                logging.info(f"'{context_key}' anahtarı context'e eklendi.")
+                module_instance = self.load_module(step["module"])
+                if not module_instance:
+                    if self.policy.get("execution", {}).get("stop_on_error", True): break
+                    else: continue
 
-            self.session.log_update()
-            logging.info(f"Adım {step_id} tamamlandı.")
+                resolved_inputs = self.resolve_inputs(step.get("i", {}), self.context)
+                try:
+                    output = module_instance.execute(resolved_inputs, self.context, self.db_manager)
+                except Exception as e:
+                    logging.error(f"Adım {step_id} yürütülürken hata: {e}", exc_info=True)
+                    if self.policy.get("execution", {}).get("stop_on_error", True): break
+                    else: continue
+
+                contract_name = step.get("o", {}).get("contract")
+                if contract_name and not self.validate_data_contract(contract_name, output):
+                    if self.policy.get("execution", {}).get("stop_on_contract_violation", True): break
+                    else: continue
+
+                context_key = step.get("o", {}).get("context_key")
+                if context_key:
+                    self.context[context_key] = output
+                    logging.info(f"'{context_key}' anahtarı context'e eklendi.")
+
+                self.session.log_update()
+                logging.info(f"Adım {step_id} tamamlandı.")
+        finally:
+            self.state = "IDLE"
+            logging.info("İş akışı tamamlandı. Durum IDLE olarak sıfırlandı.")
 
 if __name__ == "__main__":
     logging.info("CSV INGESTION PROCESS (CSV-INGEST-PROCESS-01) BAŞLATILIYOR...")
