@@ -1,0 +1,21 @@
+{
+  "product_data_schema": {
+    "type": "object",
+    "properties": {
+      "data": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "name": { "type": "string" },
+            "base_price": { "type": "number" },
+            "materials": { "type": "array", "items": { "type": "string" } }
+          },
+          "required": ["id", "name"]
+        }
+      }
+    },
+    "required": ["data"]
+  }
+}

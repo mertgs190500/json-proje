@@ -1,0 +1,20 @@
+{
+  "default_csv": {
+    "delimiter": ",",
+    "encoding": "utf-8",
+    "header_row": 0,
+    "column_mapping": {
+      "Product ID": "product_id",
+      "Name": "product_name"
+    }
+  },
+  "sales_report_profile": {
+    "inherits": "default_csv",
+    "delimiter": ";",
+    "column_mapping": {
+      "SKU": "product_id",
+      "Title": "product_name",
+      "Sales": "sales_count"
+    }
+  }
+}

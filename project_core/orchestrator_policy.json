@@ -1,0 +1,10 @@
+{
+  "error_handling": {
+    "on_step_failure": "abort",
+    "retry_count": 0
+  },
+  "logging": {
+    "level": "INFO",
+    "format": "%(asctime)s - %(levelname)s - %(message)s"
+  }
+}

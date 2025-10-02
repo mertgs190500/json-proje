@@ -11,11 +11,16 @@ class DataLoader:
 
         logging.info(f"[DataLoader] Loading data from {file_path}...")
         try:
-            # Orkestratörün çalıştığı ortamda dosya sisteminden okuma yapılır.
             with open(file_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-            logging.info(f"[DataLoader] Successfully loaded data from {file_path}.")
-            return data
+                raw_data = json.load(f)
+
+            # Extract the list of products from the raw data
+            products_list = raw_data.get("products", [])
+
+            logging.info(f"[DataLoader] Successfully loaded {len(products_list)} products from {file_path}.")
+
+            # Return the data in a structured output
+            return {"data": products_list}
         except FileNotFoundError:
             logging.error(f"[DataLoader] File not found: {file_path}")
             raise

@@ -1,0 +1,93 @@
+{
+  "workflow": [
+    {
+      "name": "LoadInitialData",
+      "module": "data_loader",
+      "class": "DataLoader",
+      "inputs": {
+        "file_path": "project_core/product_data.json"
+      },
+      "contract": "product_data_schema"
+    },
+    {
+      "name": "IngestPopularProducts",
+      "module": "csv_ingestor",
+      "class": "CSVIngestor",
+      "inputs": {
+        "filepath": "project_core/populer_urunler.csv",
+        "profile": "$profile.sales_report_profile"
+      }
+    },
+    {
+      "name": "AnalyzeMarket",
+      "module": "market_analyzer",
+      "class": "MarketAnalyzer",
+      "inputs": {
+        "product_data": "$ref.LoadInitialData.output.data"
+      }
+    },
+    {
+      "name": "AnalyzeCustomerFeedback",
+      "module": "voc_analyzer",
+      "class": "VoCAnalyzer",
+      "inputs": {
+        "feedback_source": "$ref.IngestPopularProducts.output.data"
+      }
+    },
+    {
+      "name": "ExtractKeywords",
+      "module": "keyword_processor",
+      "class": "KeywordProcessor",
+      "inputs": {
+        "text_data": "$ref.AnalyzeCustomerFeedback.output.summary"
+      }
+    },
+    {
+      "name": "OptimizeTitle",
+      "module": "title_optimizer",
+      "class": "TitleOptimizer",
+      "inputs": {
+        "keywords": "$ref.ExtractKeywords.output.keywords",
+        "product_info": "$ref.LoadInitialData.output.data"
+      }
+    },
+    {
+      "name": "SelectBestOption",
+      "module": "mab_optimizer",
+      "class": "MABOptimizer",
+      "inputs": {
+        "variations": [
+          "$ref.OptimizeTitle.output.optimized_title",
+          "Default Title A",
+          "Default Title B"
+        ]
+      }
+    },
+    {
+      "name": "AnalyzeVisuals",
+      "module": "visual_analyzer",
+      "class": "VisualAnalyzer",
+      "inputs": {
+        "image_urls": [
+          "http://example.com/image1.jpg",
+          "http://example.com/image2.jpg"
+        ]
+      }
+    },
+    {
+      "name": "DeterminePackaging",
+      "module": "packaging_strategist",
+      "class": "PackagingStrategist",
+      "inputs": {
+        "product_info": "$ref.LoadInitialData.output.data",
+        "analysis_summary": "$ref.AnalyzeMarket.output.analysis_summary"
+      }
+    },
+    {
+      "name": "ProcessFeedbackLoop",
+      "module": "feedback_processor",
+      "class": "FeedbackProcessor",
+      "inputs": {}
+    }
+  ]
+}
