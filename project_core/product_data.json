@@ -1,0 +1,14 @@
+{
+  "products": [
+    {
+      "id": "prod_001",
+      "name": "Altın Kolye",
+      "base_price": 499.99,
+      "materials": ["14K Altın", "Pırlanta"]
+    }
+  ],
+  "pricing_tiers": {
+    "standard": 1.0,
+    "premium": 1.5
+  }
+}
