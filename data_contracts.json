@@ -1,0 +1,55 @@
+{
+  "contracts": {
+    "StrategicKeywordData": {
+      "description": "Anahtar kelime hazırlama adımının standart çıktısı (Rapor 1.3).",
+      "type": "object",
+      "properties": {
+        "coreKeywords": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "longTailKeywords": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "metrics": {
+          "type": "object",
+          "properties": {
+            "totalSearchVolume": {"type": "integer", "minimum": 0},
+            "competitorDensity": {"type": "number", "minimum": 0, "maximum": 1}
+          },
+          "required": ["totalSearchVolume", "competitorDensity"]
+        }
+      },
+      "required": ["coreKeywords", "longTailKeywords", "metrics"]
+    },
+    "MarketIntelligenceData": {
+      "description": "Pazar istihbaratı modülünün standart çıktısı (Rapor 2.1).",
+      "type": "object",
+      "properties": {
+        "topCompetitorTags": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "priceRange": {
+          "type": "object",
+          "properties": {
+            "avg": {"type": "number"}
+          },
+          "required": ["avg"]
+        }
+      },
+      "required": ["topCompetitorTags", "priceRange"]
+    },
+    "VoiceOfCustomerInsights": {
+        "description": "Müşteri yorumu analizi çıktısı (Rapor 2.2).",
+        "type": "object",
+        "properties": {
+            "positiveThemes": {"type": "array", "items": {"type": "string"}},
+            "negativeThemes": {"type": "array", "items": {"type": "string"}},
+            "benefitDrivenPhrases": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["positiveThemes", "negativeThemes", "benefitDrivenPhrases"]
+    }
+  }
+}
