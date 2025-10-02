@@ -72,6 +72,8 @@ class RuleEngine:
         return True
 
 import importlib.util # For dynamic module loading
+from session_manager import SessionManager
+# version_control will be used by specific modules like exporter, not directly by the orchestrator loop
 
 class ProfileManager:
     """Loads and manages inheritable profiles from csv_profiles.json."""
@@ -116,9 +118,10 @@ class WorkflowOrchestrator:
     """Orchestrates the entire workflow based on a configuration file."""
     def __init__(self):
         self.policy = self._load_policy("orchestrator_policy.json")
-        # Configure logging based on the policy
         log_level = self.policy.get("logging", {}).get("level", "INFO").upper()
         logging.getLogger().setLevel(log_level)
+
+        self.session = SessionManager(self.policy.get("session"))
 
         self.workflow_schema = load_json("workflow_schema_v2.json")
         contracts_data = load_json("data_contracts.json")
@@ -126,8 +129,8 @@ class WorkflowOrchestrator:
         self.context = {}
         self.rule_engine = RuleEngine()
         self.profile_manager = ProfileManager()
-        self.db_manager = DBManager() # Initialize the DB Manager
-        logging.info("Orkestratör başlatıldı, Politikalar, DB Yöneticisi ve Veri Sözleşmeleri yüklendi.")
+        self.db_manager = DBManager()
+        logging.info("Orkestratör başlatıldı: Policy, Session, DBManager, Contracts yüklendi.")
 
     def _load_policy(self, policy_file):
         """Loads operational policies from the specified file."""
@@ -167,40 +170,43 @@ class WorkflowOrchestrator:
             return None
 
     def resolve_inputs(self, inputs, context):
-        """Resolves $ref and $profile pointers in the input definitions."""
-        resolved = {}
-        for key, value in inputs.items():
-            if isinstance(value, dict):
-                if "$ref" in value:
-                    ref_path = value["$ref"]
-                    if ref_path.startswith("context."):
-                        try:
-                            temp_context = context
-                            for part in ref_path.split('.')[1:]:
-                                temp_context = temp_context[part]
-                            resolved[key] = temp_context
-                            logging.info(f"Referans ($ref) çözümlendi: '{ref_path}'")
-                        except (KeyError, TypeError):
-                            logging.warning(f"Referans ($ref) çözümlenemedi: {ref_path}")
-                            resolved[key] = None
-                    else:
-                        resolved[key] = value
-                elif "$profile" in value:
-                    # NEW: Resolve $profile references
-                    profile_name = value["$profile"]
-                    merged_profile = self.profile_manager.get_merged_profile(profile_name)
-                    if merged_profile:
-                        # The key for the resolved profile is the same as the input key
-                        resolved[key] = merged_profile
-                        logging.info(f"Profil ($profile) çözümlendi: '{profile_name}'")
-                    else:
-                        logging.warning(f"Profil ($profile) çözümlenemedi: {profile_name}")
-                        resolved[key] = None
-                else:
-                    resolved[key] = value
-            else:
-                resolved[key] = value
-        return resolved
+        """
+        Recursively resolves $ref and $profile pointers in input definitions.
+        """
+        if isinstance(inputs, dict):
+            # First, check if the dictionary itself is a special reference
+            if "$ref" in inputs:
+                ref_path = inputs["$ref"]
+                if ref_path.startswith("context."):
+                    try:
+                        # Resolve the path from the context object
+                        temp_context = context
+                        for part in ref_path.split('.')[1:]:
+                            temp_context = temp_context[part]
+                        logging.info(f"Referans ($ref) çözümlendi: '{ref_path}'")
+                        return temp_context
+                    except (KeyError, TypeError) as e:
+                        logging.warning(f"Referans ($ref) çözümlenemedi: {ref_path}. Hata: {e}")
+                        return None
+                return inputs # Return as-is if not a context ref
+
+            if "$profile" in inputs:
+                profile_name = inputs["$profile"]
+                logging.info(f"Profil ($profile) çözümleniyor: '{profile_name}'")
+                return self.profile_manager.get_merged_profile(profile_name)
+
+            # If it's a regular dictionary, recurse through its values
+            resolved_dict = {}
+            for key, value in inputs.items():
+                resolved_dict[key] = self.resolve_inputs(value, context)
+            return resolved_dict
+
+        elif isinstance(inputs, list):
+            # If it's a list, recurse through its items
+            return [self.resolve_inputs(item, context) for item in inputs]
+
+        # Base case: the item is a primitive (str, int, etc.), so return it directly
+        return inputs
 
     def run(self, config_file):
         """Loads and executes the workflow from a configuration file."""
@@ -219,6 +225,12 @@ class WorkflowOrchestrator:
         for step in config_data.get("steps", []):
             step_id = step.get('id', 'N/A')
             logging.info(f"--- Adım: {step_id} ---")
+
+            # PRE-STEP CHECK: Check session status before every step
+            session_status, message = self.session.check_status()
+            if session_status != "STATUS_OK":
+                logging.error(f"İş akışı durduruldu (Session Status: {session_status}): {message}")
+                break
 
             # 2a. Evaluate Rules
             ruleset_name = step.get("rs", {}).get("ruleset_name")
@@ -271,6 +283,7 @@ class WorkflowOrchestrator:
                 self.context[context_key] = output
                 logging.info(f"'{context_key}' anahtarı context'e eklendi.")
 
+            self.session.log_update() # Log that a step was successfully completed
             logging.info(f"Adım {step_id} tamamlandı.")
 
 if __name__ == "__main__":
