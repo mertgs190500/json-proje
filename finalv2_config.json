@@ -82,6 +82,66 @@
                 "version": "1.0",
                 "last_updated": "2025-10-02T13:03:00Z"
             }
+        },
+        {
+            "id": "load_product_data",
+            "name": "Load Product Data",
+            "module": "data_loader.py",
+            "rs": { "ruleset_name": "AlwaysRun" },
+            "i": {
+                "file_path": "project_core/product_data.json"
+            },
+            "o": {
+                "contract": "DataLoaderOutput",
+                "context_key": "product_data"
+            },
+            "meta": {
+                "description": "Loads static product data from a JSON file.",
+                "author": "Jules",
+                "version": "1.0",
+                "last_updated": "2025-10-02T22:35:00Z"
+            }
+        },
+        {
+            "id": "optimize_title",
+            "name": "Optimize Product Title",
+            "module": "title_optimizer.py",
+            "rs": { "ruleset_name": "AlwaysRun" },
+            "i": {
+                "market_analysis": { "$ref": "context.market_analysis_results" },
+                "product_data": { "$ref": "context.product_data.data.products" }
+            },
+            "o": {
+                "contract": "TitleOptimizerOutput",
+                "context_key": "final_title_output"
+            },
+            "meta": {
+                "description": "Generates an SEO-optimized title.",
+                "author": "Jules",
+                "version": "1.0",
+                "last_updated": "2025-10-02T22:35:00Z"
+            }
+        },
+        {
+            "id": "generate_description",
+            "name": "Generate Product Description",
+            "module": "description_generator.py",
+            "rs": { "ruleset_name": "AlwaysRun" },
+            "i": {
+                "market_analysis_results": { "$ref": "context.market_analysis_results" },
+                "title_final": { "$ref": "context.final_title_output.title_final" },
+                "product_data": { "$ref": "context.product_data.data.products" }
+            },
+            "o": {
+                "contract": "DescriptionGeneratorOutput",
+                "context_key": "final_description_output"
+            },
+            "meta": {
+                "description": "Generates an SEO-optimized product description.",
+                "author": "Jules",
+                "version": "1.0",
+                "last_updated": "2025-10-02T22:35:00Z"
+            }
         }
     ]
 }
