@@ -93,18 +93,28 @@ class VersionControl:
 
             next_version = self._get_next_version(base_name, ext)
 
-            # Replace placeholders in the pattern
-            filename = self.pattern.format(
+            # To handle both strftime directives (e.g., %Y) and format placeholders (e.g., {N}),
+            # we need a two-step formatting process. The pattern from config might have a
+            # hardcoded extension, which we need to ignore in favor of the one from base_path.
+
+            pattern_name_part, _ = os.path.splitext(self.pattern)
+
+            # Step 1: Temporarily replace the .format() placeholders with unique, safe strings
+            # that strftime will ignore.
+            temp_pattern = pattern_name_part.replace('{N}', '<<VERSION>>').replace('{sha12}', '<<SHA12>>')
+
+            # Step 2: Now, safely format the time part using strftime
+            time_formatted_pattern = datetime.now(timezone.utc).strftime(temp_pattern)
+
+            # Step 3: Restore the .format() placeholders and then format them.
+            final_pattern_part = time_formatted_pattern.replace('<<VERSION>>', '{N}').replace('<<SHA12>>', '{sha12}')
+            filename_part = final_pattern_part.format(
                 N=next_version,
-                sha12=sha256_hash[:12],
-                Y=datetime.now().strftime('%Y'),
-                m=datetime.now().strftime('%m'),
-                d=datetime.now().strftime('%d'),
-                H=datetime.now().strftime('%H'),
-                M=datetime.now().strftime('%M'),
+                sha12=sha256_hash[:12]
             )
-            # Add base name to the filename
-            final_filename = f"{base_name}_{filename}"
+
+            # Add base name and the correct extension determined from the base_path
+            final_filename = f"{base_name}_{filename_part}{ext}"
             final_filepath = os.path.join(self.ver_dir, final_filename)
 
             # 3. Atomic Write
