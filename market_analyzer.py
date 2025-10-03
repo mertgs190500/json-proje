@@ -7,6 +7,8 @@ class MarketAnalyzer:
     """
     Analyzes market data from various sources to identify trends,
     competitor strategies, and keyword opportunities.
+    This implementation is based on the high-level goals of the task,
+    as finalv1.json defines workflow orchestration rather than business logic.
     """
 
     def _normalize_column(self, df, column_name):
