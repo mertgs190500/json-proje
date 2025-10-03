@@ -1,5 +1,6 @@
 import json
 import logging
+from version_control import VersionControl
 
 class DescriptionGenerator:
     """
@@ -12,6 +13,7 @@ class DescriptionGenerator:
         Initializes the DescriptionGenerator by loading rules from the central JSON configuration.
         """
         self.rules = {}
+        config = {}
         try:
             with open('project_core/finalv1.json', 'r', encoding='utf-8') as f:
                 config = json.load(f)
@@ -40,6 +42,16 @@ class DescriptionGenerator:
                 'structure_guide': {}, 'validation_rules': {}, 'brand_voice': {}, 'logistics_info': {}, 'shop_profile_logistics': {}
             }
 
+        # Load configuration for VersionControl
+        try:
+            versioning_config = config.get("fs", {}).get("ver", {})
+            if not versioning_config:
+                raise ValueError("Versioning configuration 'fs.ver' not found in finalv1.json")
+            self.vc = VersionControl(versioning_config=versioning_config)
+        except (ValueError) as e:
+            logging.error(f"Failed to initialize VersionControl: {e}")
+            self.vc = None
+
     def execute(self, inputs, context, db_manager=None):
         """
         Orchestrates the description generation and validation process.
@@ -63,10 +75,24 @@ class DescriptionGenerator:
 
         logging.info("DescriptionGenerator execution finished.")
 
-        return {
+        output_data = {
             "description_final": final_description,
             "validation_report": validation_report
         }
+
+        if self.vc:
+            try:
+                save_result = self.vc.save_with_metadata(
+                    base_path='outputs/generated_description.json',
+                    data=output_data,
+                    actor='description_generator.py',
+                    reason='Generated SEO description based on analysis.'
+                )
+                logging.info(f"Successfully saved generated description to {save_result.get('filepath')}")
+            except Exception as e:
+                logging.error(f"Failed to save generated description using VersionControl: {e}")
+
+        return output_data
 
     def _generate_description_sections(self, market_data, final_title, product_data):
         """

@@ -1,5 +1,7 @@
 import logging
 import re
+import json
+from version_control import VersionControl
 
 class TitleOptimizer:
     def __init__(self):
@@ -12,11 +14,22 @@ class TitleOptimizer:
         self.FRONT_LOAD_CUTOFF = 40
         # Rule: Forbidden terms that must not appear in the title
         self.FORBIDDEN_TERMS = ["iade", "return"]
-        # Rule: Word repetition limit (placeholder, will be refined)
-        self.MAX_WORD_REPETITION = 2
         # Rule: Word repetition limit
         self.MAX_WORD_REPETITION = 2
         logging.info("TitleOptimizer initialized with business rules.")
+
+        # Load configuration for VersionControl
+        try:
+            with open("project_core/finalv1.json", 'r') as f:
+                config = json.load(f)
+            versioning_config = config.get("fs", {}).get("ver", {})
+            if not versioning_config:
+                raise ValueError("Versioning configuration 'fs.ver' not found in finalv1.json")
+            self.vc = VersionControl(versioning_config=versioning_config)
+        except (FileNotFoundError, json.JSONDecodeError, ValueError) as e:
+            logging.error(f"Failed to initialize VersionControl: {e}")
+            self.vc = None
+
 
     def execute(self, inputs, context, db_manager=None):
         """
@@ -62,12 +75,26 @@ class TitleOptimizer:
             return {"title_final": "Error: No valid titles found", "title_variations": all_titles}
 
         logging.info(selection_log)
-        logging.info("TitleOptimizer execution finished.")
 
-        return {
+        output_data = {
             "title_final": best_title,
             "title_variations": all_titles
         }
+
+        if self.vc:
+            try:
+                save_result = self.vc.save_with_metadata(
+                    base_path='outputs/optimized_title.json',
+                    data=output_data,
+                    actor='title_optimizer.py',
+                    reason='Generated optimized SEO title.'
+                )
+                logging.info(f"Successfully saved optimized title to {save_result.get('filepath')}")
+            except Exception as e:
+                logging.error(f"Failed to save optimized title using VersionControl: {e}")
+
+        logging.info("TitleOptimizer execution finished.")
+        return output_data
 
     def _generate_variations(self, market_analysis, product_data):
         """
