@@ -2549,45 +2549,19 @@
               }
             },
             "20": {
-              "c": {
-                "$ref": "#/_defs/def_8b0f9d7d"
-              },
-              "fl": {
-                "guard": {
-                  "advance_only_if": []
+              "n": "Audit",
+              "module": "project_core/audit_generator.py",
+              "requires": ["19"],
+              "i": {
+                "summary_info": {
+                  "config_version": "rel-v8-20250909-180916-unlock-10-11-14-15"
                 }
               },
-              "g": {
-                "$ref": "#/_defs/def_7ed1b523"
-              },
-              "hitl": {
-                "gpt_tasks": [],
-                "user_tasks": []
-              },
-              "i": {
-                "$ref": "#/_defs/def_c5d639ae"
-              },
-              "n": "Audit",
               "o": {
-                "$ref": "#/_defs/def_6144d7c1"
-              },
-              "precon": {
-                "$ref": "#/_defs/def_f5ad00a4"
-              },
-              "requires": [
-                "19"
-              ],
-              "rls": {
-                "$ref": "#/_defs/def_10a8ddea"
+                "context_key": "audit_report"
               },
               "rs": {
-                "$ref": "#/_defs/def_28adac84"
-              },
-              "up_sig": {
-                "pol": "mark_stale_on_upstream_change"
-              },
-              "v": {
-                "present": true
+                "ruleset_name": "AlwaysRun"
               }
             },
             "3": {
