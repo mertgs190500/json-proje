@@ -1,54 +1,92 @@
 import json
 import logging
 import os
+import re
 from datetime import datetime, timezone, timedelta
 
 class KnowledgeManager:
     """
     Manages a structured, time-stamped, and confidence-scored knowledge base.
+    All write operations are versioned via the VersionControl module.
     """
-    def __init__(self, db_path='knowledge_base.json', ttl_days=30):
-        self.db_path = db_path
-        self.ttl = timedelta(days=ttl_days)
+    def __init__(self, version_controller, base_path='outputs/knowledge_base.json', ttl_days=30):
+        """
+        Initializes the KnowledgeManager with a version controller.
 
-        # Check for existence before loading.
-        db_exists = os.path.exists(self.db_path)
+        Args:
+            version_controller: An instance of the VersionControl class.
+            base_path (str): The base path for the knowledge base file.
+            ttl_days (int): Time-to-live for insights in days.
+        """
+        self.version_controller = version_controller
+        self.base_path = base_path
+        self.ttl = timedelta(days=ttl_days)
         self.db = self._load_db()
 
-        # If the db did not exist, save the newly created default structure.
-        if not db_exists:
-            self._save_db()
+        # If the database was empty (i.e., no previous versions found), save the initial structure.
+        if not self.db.get("learned_insights") and not self.db.get("session_state"):
+             self._save_db("Initial knowledge base creation")
 
-        logging.info(f"KnowledgeManager başlatıldı. Veritabanı: {self.db_path}")
+        logging.info(f"KnowledgeManager initialized. Base path: {self.base_path}")
+
+    def _find_latest_db(self):
+        """Finds the most recent version of the knowledge base file."""
+        ver_dir = self.version_controller.ver_dir
+        base_name = os.path.splitext(os.path.basename(self.base_path))[0]
+
+        # Regex to capture version number from filenames like 'knowledge_base_..._v123.json'
+        pattern = re.compile(f"^{re.escape(base_name)}.*?_v(\\d+).*?.json$")
+
+        latest_version = -1
+        latest_file = None
+
+        if not os.path.exists(ver_dir):
+            return None
+
+        for filename in os.listdir(ver_dir):
+            match = pattern.match(filename)
+            if match:
+                version = int(match.group(1))
+                if version > latest_version:
+                    latest_version = version
+                    latest_file = os.path.join(ver_dir, filename)
+
+        return latest_file
 
     def _load_db(self):
-        """Loads the JSON database from the file, ensuring it has the required structure."""
-        try:
-            with open(self.db_path, 'r', encoding='utf-8') as f:
-                data = json.load(f)
-                # Ensure all required sections exist
-                if "session_state" not in data:
-                    data["session_state"] = {}
-                if "learned_insights" not in data:
-                    data["learned_insights"] = []
-                if "performance_metrics" not in data:
-                    data["performance_metrics"] = []
-                return data
-        except (FileNotFoundError, json.JSONDecodeError):
-            logging.warning(f"{self.db_path} bulunamadı veya geçersiz. Varsayılan yapı oluşturuluyor.")
-            return {
-                "session_state": {},
-                "learned_insights": [],
-                "performance_metrics": []
-            }
+        """Loads the most recent version of the JSON database from the versioned directory."""
+        latest_db_path = self._find_latest_db()
+        if latest_db_path:
+            logging.info(f"Loading latest knowledge base from: {latest_db_path}")
+            try:
+                with open(latest_db_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    # Ensure all required sections exist for forward compatibility
+                    data.setdefault("session_state", {})
+                    data.setdefault("learned_insights", [])
+                    data.setdefault("performance_metrics", [])
+                    return data
+            except (FileNotFoundError, json.JSONDecodeError, Exception) as e:
+                logging.error(f"Failed to load or parse {latest_db_path}: {e}. Starting fresh.", exc_info=True)
 
-    def _save_db(self):
-        """Saves the current state of the database to the file."""
+        logging.warning(f"No existing knowledge base found for base path '{self.base_path}'. Creating a new one.")
+        return {
+            "session_state": {},
+            "learned_insights": [],
+            "performance_metrics": []
+        }
+
+    def _save_db(self, reason='Persisting updated knowledge base across session.'):
+        """Saves the current state of the database using the version controller."""
         try:
-            with open(self.db_path, 'w', encoding='utf-8') as f:
-                json.dump(self.db, f, indent=2, ensure_ascii=False)
+            self.version_controller.save_with_metadata(
+                base_path=self.base_path,
+                data=self.db,
+                actor='knowledge_manager.py',
+                reason=reason
+            )
         except Exception as e:
-            logging.error(f"Bilgi tabanı kaydedilemedi: {self.db_path}. Hata: {e}")
+            logging.error(f"Knowledge base could not be saved via VersionController: {e}", exc_info=True)
 
     def _is_expired(self, timestamp_str):
         """Checks if a timestamp is older than the defined TTL."""
@@ -61,7 +99,7 @@ class KnowledgeManager:
     def set_session_state(self, key, value):
         """Sets a value in the session_state section."""
         self.db["session_state"][key] = value
-        self._save_db()
+        self._save_db(f"Update session state: Set '{key}'")
         logging.info(f"Oturum durumu güncellendi: '{key}' = '{value}'")
 
     def get_session_state(self, key=None):
@@ -87,7 +125,7 @@ class KnowledgeManager:
             "timestamp": datetime.now(timezone.utc).isoformat().replace('+00:00', 'Z')
         }
         self.db["learned_insights"].append(insight)
-        self._save_db()
+        self._save_db(f"Add new insight: '{key}' from '{source_id}'")
         logging.info(f"Yeni bilgi eklendi: Anahtar='{key}', Kaynak='{source_id}'")
 
     def get_latest_insight(self, key, ignore_expired=True):

@@ -2,6 +2,8 @@ import unittest
 import os
 import json
 import pandas as pd
+import shutil
+from version_control import VersionControl
 
 from feedback_processor import FeedbackProcessor
 from knowledge_manager import KnowledgeManager
@@ -10,9 +12,12 @@ class TestFeedbackProcessor(unittest.TestCase):
 
     def setUp(self):
         """Set up test environment before each test."""
-        self.kb_path = "test_knowledge_base.json"
         self.perf_csv_path = "test_performance_data.csv"
         self.listing_json_path = "test_listing_history.json"
+
+        # Setup VersionControl for KnowledgeManager
+        self.version_config = {"pattern": "test_v{N}_{sha12}.json"}
+        self.version_controller = VersionControl(self.version_config)
 
         # Create a dummy performance CSV
         perf_data = {
@@ -31,15 +36,13 @@ class TestFeedbackProcessor(unittest.TestCase):
         with open(self.listing_json_path, 'w') as f:
             json.dump({"listing_id": 101, "title_at_publish": "Old Title"}, f)
 
-        # Ensure knowledge base is clean before test
-        if os.path.exists(self.kb_path):
-            os.remove(self.kb_path)
-
     def tearDown(self):
         """Clean up test files after each test."""
-        for path in [self.kb_path, self.perf_csv_path, self.listing_json_path]:
+        for path in [self.perf_csv_path, self.listing_json_path]:
             if os.path.exists(path):
                 os.remove(path)
+        if os.path.exists("outputs"):
+            shutil.rmtree("outputs")
 
     def test_execute_updates_knowledge_base(self):
         """
@@ -47,7 +50,7 @@ class TestFeedbackProcessor(unittest.TestCase):
         and adds the right insights to the knowledge base.
         """
         # Arrange
-        km = KnowledgeManager(db_path=self.kb_path)
+        km = KnowledgeManager(version_controller=self.version_controller, base_path="test_knowledge_base.json")
         processor = FeedbackProcessor()
 
         inputs = {
@@ -55,15 +58,23 @@ class TestFeedbackProcessor(unittest.TestCase):
             "listing_history_json": self.listing_json_path
         }
 
+        # The context needs to provide the versioning config for the report saving
+        context = {
+            "fs": {
+                "ver": self.version_config
+            }
+        }
+
         # Act
-        result = processor.execute(inputs, knowledge_manager=km)
+        result = processor.execute(inputs, context=context, knowledge_manager=km)
 
         # Assert
         self.assertEqual(result["status"], "success")
         self.assertEqual(result["insights_added"], 5, "Should have found 5 insights in total")
 
-        # Verify the knowledge base content
-        kb_data = km._load_db()
+        # Verify the knowledge base content by reloading it
+        km_reloaded = KnowledgeManager(version_controller=self.version_controller, base_path="test_knowledge_base.json")
+        kb_data = km_reloaded.db
         self.assertEqual(len(kb_data["learned_insights"]), 5)
 
         insights = kb_data["learned_insights"]

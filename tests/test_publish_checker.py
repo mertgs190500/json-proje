@@ -1,6 +1,7 @@
 import unittest
 import sys
 import os
+import shutil
 
 # Add project_core to the Python path to allow importing PublishChecker
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -16,6 +17,11 @@ class TestPublishChecker(unittest.TestCase):
 
         # A base context that represents a successful state
         self.base_context = {
+            "fs": {
+                "ver": {
+                    "pattern": "test_v{N}_{sha12}.json"
+                }
+            },
             'run': {
                 's': {
                     '18': {
@@ -44,6 +50,11 @@ class TestPublishChecker(unittest.TestCase):
             'compliance': {'status': 'PASS'},
             'ads_sync': {'status': 'PASS'}
         }
+
+    def tearDown(self):
+        """Clean up the outputs directory created by VersionControl."""
+        if os.path.exists("outputs"):
+            shutil.rmtree("outputs")
 
     def test_execute_ready_status(self):
         """Test the ideal case where all checks pass and status is READY."""
