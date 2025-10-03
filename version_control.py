@@ -1,117 +1,170 @@
 import os
-import logging
 import json
 import re
+import logging
+import hashlib
+import tempfile
+import shutil
+from datetime import datetime
 
 class VersionControl:
     """
-    Manages file versioning to prevent overwriting and ensure data integrity.
-    Implements the "never overwrite, create a new version" principle.
+    Manages file versioning with integrity checks (hash), metadata, and atomic writes.
     """
 
-    def __init__(self, versioning_policy=None):
+    def __init__(self, versioning_config):
         """
-        Initializes the version controller with a versioning policy.
+        Initializes the version controller.
 
         Args:
-            versioning_policy (dict): A dictionary defining the versioning pattern, e.g.,
-                                      {'pattern': '_v{version}'}.
+            versioning_config (dict): The configuration object from finalv1.json,
+                                      expected to be at fs.ver.
         """
-        if versioning_policy is None:
-            versioning_policy = {}
-        # Default pattern: filename_v1.json, filename_v2.json, etc.
-        self.pattern = versioning_policy.get("pattern", "_v{version}")
-        logging.info(f"Version Control initialized with pattern: '{self.pattern}'")
+        self.pattern = versioning_config.get("pattern", "default_v{N}_{sha12}.json")
+        self.diff_pattern = versioning_config.get("diff_j", {}).get("pattern", "PATCH_%Y%m%d_%H%M%S.diff.json")
+        self.base_dir = "outputs/fs" # Or get from config if available
+        self.ver_dir = os.path.join(self.base_dir, "ver")
+        self.diff_dir = os.path.join(self.base_dir, "diff_j")
+        os.makedirs(self.ver_dir, exist_ok=True)
+        os.makedirs(self.diff_dir, exist_ok=True)
 
-    def _get_next_version(self, base_path):
+        log_file = 'daemon.log'
+        logging.basicConfig(
+            level=logging.INFO,
+            format='%(asctime)s - %(levelname)s - %(message)s',
+            handlers=[
+                logging.FileHandler(log_file),
+                logging.StreamHandler()
+            ]
+        )
+        self.logger = logging.getLogger(__name__)
+        self.logger.info(f"Version Control initialized with pattern: '{self.pattern}'")
+
+    def _get_next_version(self, base_name, ext):
         """
-        Finds the next available version number for a given base path.
-
-        Args:
-            base_path (str): The base file path (e.g., 'data/listing.json').
-
-        Returns:
-            int: The next integer version number to be used.
+        Finds the next available version number for a given base name inside the versioned directory.
         """
-        directory, filename = os.path.split(base_path)
-        base_name, ext = os.path.splitext(filename)
-
-        # Ensure the directory exists
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        # Regex to find existing versioned files
-        # It looks for the base name, the start of the version pattern (e.g., '_v'), a number, and the extension.
-        pattern_regex_part = self.pattern.format(version="(\d+)").replace("{", "\\{").replace("}", "\\}")
-        version_regex = re.compile(f"^{re.escape(base_name)}{pattern_regex_part}{re.escape(ext)}$")
-
         max_version = 0
+        # Simplified regex to find version numbers like '_v{N}'
+        version_regex = re.compile(f"^{re.escape(base_name)}.*?_v(\\d+).*?{re.escape(ext)}$")
         try:
-            for f in os.listdir(directory):
+            for f in os.listdir(self.ver_dir):
                 match = version_regex.match(f)
                 if match:
                     version = int(match.group(1))
                     if version > max_version:
                         max_version = version
         except FileNotFoundError:
-            # The directory might not exist yet, which is fine.
-            pass
-
+            pass  # Directory might not exist yet
         return max_version + 1
 
     def save_new_version(self, base_path, data):
         """
-        Saves data to a new, versioned file.
+        Saves data to a new, versioned file using an atomic write operation.
 
         Args:
-            base_path (str): The base file path (e.g., 'data/listing.json').
-            data (dict or str): The data to be saved.
+            base_path (str): The logical base path for the file (e.g., 'final_set/results.json').
+            data (dict): The JSON data (as a dictionary) to be saved.
 
         Returns:
-            str: The full path of the newly created versioned file, or None on failure.
+            dict: A dictionary containing the filepath, version, and sha256 hash.
         """
+        if not isinstance(data, dict):
+            raise TypeError("Data must be a dictionary for JSON serialization.")
+
         try:
-            next_version = self._get_next_version(base_path)
+            # 1. Prepare data and calculate hash
+            serialized_data = json.dumps(data, indent=2, ensure_ascii=False, sort_keys=True).encode('utf-8')
+            sha256_hash = hashlib.sha256(serialized_data).hexdigest()
 
-            directory, filename = os.path.split(base_path)
-            base_name, ext = os.path.splitext(filename)
+            # 2. Determine file naming
+            base_name, ext = os.path.splitext(os.path.basename(base_path))
+            if not ext:
+                ext = '.json' # Default extension
 
-            # Construct the new versioned filename
-            version_tag = self.pattern.format(version=next_version)
-            new_filename = f"{base_name}{version_tag}{ext}"
-            new_filepath = os.path.join(directory, new_filename)
+            next_version = self._get_next_version(base_name, ext)
 
-            logging.info(f"Saving new version: '{new_filepath}'")
+            # Replace placeholders in the pattern
+            filename = self.pattern.format(
+                N=next_version,
+                sha12=sha256_hash[:12],
+                Y=datetime.now().strftime('%Y'),
+                m=datetime.now().strftime('%m'),
+                d=datetime.now().strftime('%d'),
+                H=datetime.now().strftime('%H'),
+                M=datetime.now().strftime('%M'),
+            )
+            # Add base name to the filename
+            final_filename = f"{base_name}_{filename}"
+            final_filepath = os.path.join(self.ver_dir, final_filename)
 
-            # Save the data (assuming JSON for this example, but could be adapted)
-            with open(new_filepath, 'w', encoding='utf-8') as f:
-                if isinstance(data, dict):
-                    json.dump(data, f, indent=2, ensure_ascii=False)
-                else:
-                    f.write(str(data))
+            # 3. Atomic Write
+            temp_dir = os.path.join(self.base_dir, "tmp")
+            os.makedirs(temp_dir, exist_ok=True)
 
-            return new_filepath
+            # Use a temporary file in a dedicated temp directory
+            fd, temp_path = tempfile.mkstemp(suffix=".json", dir=temp_dir)
+
+            try:
+                with os.fdopen(fd, 'wb') as temp_file:
+                    temp_file.write(serialized_data)
+
+                # Move the file atomically
+                shutil.move(temp_path, final_filepath)
+                self.logger.info(f"Successfully saved new version: {final_filepath}")
+
+            except Exception as e:
+                self.logger.error(f"Error during atomic write: {e}", exc_info=True)
+                if os.path.exists(temp_path):
+                    os.remove(temp_path) # Clean up temp file on failure
+                raise
+
+            # 4. Return result dictionary
+            return {
+                "filepath": final_filepath,
+                "version": next_version,
+                "sha256": sha256_hash
+            }
+
         except Exception as e:
-            logging.error(f"Failed to save new version for '{base_path}'. Error: {e}")
-            return None
+            self.logger.error(f"Failed to save new version for '{base_path}': {e}", exc_info=True)
+            raise
 
-    def diff_versions(self, file_v1_path, file_v2_path):
+    def save_with_metadata(self, base_path, data, actor, reason):
         """
-        Generates a report on the differences between two JSON file versions.
-        (Simplified for demonstration)
+        Saves a new version and an accompanying metadata file.
+
+        Args:
+            base_path (str): The logical base path for the file.
+            data (dict): The JSON data to save.
+            actor (str): The script or entity performing the action (e.g., 'tag_generator.py').
+            reason (str): The reason for this new version.
+
+        Returns:
+            dict: The result from save_new_version.
         """
-        # In a real implementation, a library like 'jsondiff' would be used for a rich diff.
-        logging.info(f"Generating diff between '{file_v1_path}' and '{file_v2_path}'.")
+        # First, save the data file to get its details
+        save_result = self.save_new_version(base_path, data)
 
-        with open(file_v1_path, 'r', encoding='utf-8') as f1:
-            data1 = json.load(f1)
-        with open(file_v2_path, 'r', encoding='utf-8') as f2:
-            data2 = json.load(f2)
-
-        # This is a very basic diff simulation.
-        diff = {
-            "added_keys": list(set(data2.keys()) - set(data1.keys())),
-            "removed_keys": list(set(data1.keys()) - set(data2.keys())),
-            "comment": "This is a simulated diff. Use a proper library for detailed comparison."
+        # Create metadata content
+        metadata = {
+            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "version": save_result["version"],
+            "sha256": save_result["sha256"],
+            "actor": actor,
+            "reason": reason,
+            "source_file": save_result["filepath"]
         }
-        return diff
+
+        # Save the metadata file
+        meta_filepath = os.path.splitext(save_result["filepath"])[0] + ".meta.json"
+
+        try:
+            with open(meta_filepath, 'w', encoding='utf-8') as f:
+                json.dump(metadata, f, indent=2, ensure_ascii=False)
+            self.logger.info(f"Successfully saved metadata: {meta_filepath}")
+        except Exception as e:
+            self.logger.error(f"Failed to save metadata for '{meta_filepath}': {e}", exc_info=True)
+            # Decide on error handling: maybe delete the data file? For now, just log.
+
+        return save_result
