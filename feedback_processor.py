@@ -1,48 +1,133 @@
 import logging
-import json
+import pandas as pd
+from datetime import datetime, timezone
 
 class FeedbackProcessor:
-    def execute(self, inputs, context, db_manager=None):
+    """
+    Analyzes post-publication performance data to identify successful and
+    unsuccessful strategies, updating the project's knowledge base with these learnings.
+    """
+
+    def execute(self, inputs: dict, knowledge_manager, db_manager=None) -> dict:
         """
-        Processes performance data and updates the knowledge base via the DBManager.
+        Executes the feedback processing logic.
+
+        Args:
+            inputs (dict): A dictionary containing the necessary data.
+                           - 'performance_data_csv' (str): Path to the performance data CSV.
+                           - 'listing_history_json' (str): Path to the JSON file containing
+                             the historical data of the listing (title, tags, etc.).
+            knowledge_manager: An instance of the KnowledgeManager class.
+            db_manager: (Optional) A database manager instance.
+
+        Returns:
+            dict: A dictionary containing the status and a summary of the operation.
         """
-        logging.info("[FeedbackProcessor] Feedback loop initiated.")
+        logging.info("[FeedbackProcessor] Starting feedback processing for task FEEDBACK-LOOP-01.")
 
-        if not db_manager:
-            logging.error("[FeedbackProcessor] DBManager was not provided. Cannot update knowledge base.")
-            return {"status": "failed", "reason": "DBManager missing"}
+        performance_data_path = inputs.get("performance_data_csv")
+        listing_history_path = inputs.get("listing_history_json")
 
-        # 1. Load the knowledge base
-        kb = db_manager.load_db("knowledge_base.json")
-        if kb is None:
-            # If the file doesn't exist or is invalid, start with a fresh structure
-            kb = {"keyword_performance_weights": {}}
-        weights = kb.get("keyword_performance_weights", {})
+        if not all([performance_data_path, listing_history_path, knowledge_manager]):
+            logging.error("[FeedbackProcessor] Missing one or more required inputs: performance_data_csv, listing_history_json, or knowledge_manager.")
+            return {"status": "failed", "reason": "Missing required inputs."}
 
-        # 2. Analyze performance data (simple algorithm for demonstration)
-        performance_data = inputs.get("performance_data", [])
-        if not performance_data:
-            logging.info("[FeedbackProcessor] No performance data provided. Nothing to update.")
-            return {"status": "no_data"}
+        try:
+            # 1. Load Performance Data
+            # In a real scenario, this could come from an API or a more structured input.
+            # For this task, we simulate reading from a CSV file.
+            # The CSV should have columns like: listing_id, date, visits, orders, ad_spend, revenue
+            perf_df = pd.read_csv(performance_data_path)
 
-        for item in performance_data:
-            keyword = item.get("keyword")
-            sales = item.get("sales", 0)
-            traffic = item.get("traffic", 0)
+            # 2. Load Listing History (to correlate performance with what was published)
+            # This part is simplified. A real implementation would need a robust way
+            # to fetch the exact state of the listing when it was published.
+            # with open(listing_history_path, 'r', encoding='utf-8') as f:
+            #     listing_history = json.load(f)
+            # For now, we'll assume the relevant SEO data is in the performance CSV for simplicity.
+            # Example columns: listing_id, title, tags (as a comma-separated string)
 
-            if not keyword:
+        except FileNotFoundError as e:
+            logging.error(f"[FeedbackProcessor] File not found: {e}")
+            return {"status": "failed", "reason": f"File not found: {e.filename}"}
+        except Exception as e:
+            logging.error(f"[FeedbackProcessor] An error occurred during data loading: {e}")
+            return {"status": "failed", "reason": str(e)}
+
+        insights_added = 0
+
+        # 3. Process data and extract insights for each row (each row is a listing's performance)
+        for index, row in perf_df.iterrows():
+            try:
+                visits = row.get('visits', 0)
+                orders = row.get('orders', 0)
+                ad_spend = row.get('ad_spend', 0.0)
+                revenue = row.get('revenue', 0.0)
+                title = row.get('title', '')
+                tags = str(row.get('tags', '')).split(',')
+
+                # Calculate Key Metrics
+                conversion_rate = (orders / visits) if visits > 0 else 0
+                roas = (revenue / ad_spend) if ad_spend > 0 else 0
+
+                # 4. Extract Learnings (Insights)
+                # This is a simplified rule set. A real system would have more complex logic.
+
+                # Insight 1: Keyword performance based on ROAS
+                if ad_spend > 10: # Only consider keywords with significant spend
+                    for tag in tags:
+                        tag = tag.strip().lower()
+                        if not tag: continue
+
+                        # Simple insight: High ROAS is good, low ROAS is bad.
+                        confidence = 0.85 if ad_spend > 50 else 0.70 # Higher confidence with more data
+                        if roas > 2.0:
+                            knowledge_manager.add_insight(
+                                key=f"keyword_roas",
+                                value={"keyword": tag, "roas": round(roas, 2), "is_successful": True},
+                                source_id="FEEDBACK-LOOP-01",
+                                confidence=confidence
+                            )
+                            insights_added += 1
+                        elif roas < 0.8:
+                             knowledge_manager.add_insight(
+                                key=f"keyword_roas",
+                                value={"keyword": tag, "roas": round(roas, 2), "is_successful": False},
+                                source_id="FEEDBACK-LOOP-01",
+                                confidence=confidence
+                            )
+                             insights_added += 1
+
+                # Insight 2: Title structure performance based on Conversion Rate
+                if visits > 100: # Only for listings with enough traffic
+                    confidence = 0.90 if visits > 1000 else 0.75
+                    # Example rule: Does the title contain a number? (e.g., "Set of 3 Rings")
+                    if any(char.isdigit() for char in title):
+                        if conversion_rate > 0.02: # 2% CR is good
+                             knowledge_manager.add_insight(
+                                key="title_structure_contains_number",
+                                value={"has_number": True, "conversion_rate": round(conversion_rate, 4), "is_successful": True},
+                                source_id="FEEDBACK-LOOP-01",
+                                confidence=confidence
+                            )
+                             insights_added += 1
+                        elif conversion_rate < 0.005: # 0.5% CR is bad
+                             knowledge_manager.add_insight(
+                                key="title_structure_contains_number",
+                                value={"has_number": True, "conversion_rate": round(conversion_rate, 4), "is_successful": False},
+                                source_id="FEEDBACK-LOOP-01",
+                                confidence=confidence
+                            )
+                             insights_added += 1
+
+            except Exception as e:
+                logging.warning(f"[FeedbackProcessor] Could not process row {index}: {e}")
                 continue
 
-            if traffic > 0:
-                conversion_rate = sales / traffic
-                # Adjust weight based on conversion rate
-                if conversion_rate > 0.05: # High CR (>5%)
-                    weights[keyword] = round(weights.get(keyword, 1.0) * 1.1, 2) # Increase weight by 10%
-                elif conversion_rate < 0.01: # Low CR (<1%)
-                    weights[keyword] = round(weights.get(keyword, 1.0) * 0.9, 2) # Decrease weight by 10%
+        logging.info(f"[FeedbackProcessor] Processing complete. Added {insights_added} new insights to the knowledge base.")
 
-        # 3. Save the updated knowledge base
-        kb["keyword_performance_weights"] = weights
-        db_manager.save_db("knowledge_base.json", kb)
-        logging.info("[FeedbackProcessor] Knowledge base has been updated.")
-        return {"status": "updated"}
+        return {
+            "status": "success",
+            "message": f"Feedback processing complete. {insights_added} new insights added.",
+            "insights_added": insights_added
+        }
