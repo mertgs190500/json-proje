@@ -120,3 +120,7 @@ class KnowledgeManager:
             insight for insight in self.db["learned_insights"]
             if insight.get("source_id") == source_id
         ]
+
+    def get_all_insights(self):
+        """Returns all insights from the knowledge base."""
+        return self.db.get("learned_insights", [])
