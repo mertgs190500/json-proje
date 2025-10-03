@@ -193,4 +193,38 @@ class MarketAnalyzer:
         }
 
         logging.info("[MarketAnalyzer] Market analysis finished successfully.")
+
+        # --- Save output using VersionControl ---
+        try:
+            from version_control import VersionControl
+            import json
+
+            # Per project conventions and initial instructions, the configuration is loaded
+            # directly within the module. A future refactor could pass this via the context.
+            with open('project_core/finalv1.json', 'r', encoding='utf-8') as f:
+                config = json.load(f)
+
+            # NOTE: The constructor for VersionControl expects 'versioning_config'.
+            vc_policy = config.get('fs', {}).get('ver', {})
+            version_controller = VersionControl(versioning_config=vc_policy)
+
+            output_path = 'outputs/market_analysis.json'
+
+            save_result = version_controller.save_with_metadata(
+                base_path=output_path,
+                data=final_output,
+                actor='market_analyzer.py',
+                reason='Completed market analysis from processed CSV data.'
+            )
+
+            if save_result:
+                logging.info(f"Market analysis saved with metadata: {save_result['filepath']}")
+            else:
+                logging.error(f"Failed to save market analysis for: {output_path}")
+
+        except Exception as e:
+            logging.error(f"[MarketAnalyzer] Failed to save output using VersionControl. Error: {e}", exc_info=True)
+            # Decide on error handling: re-raise, or just return the output?
+            # For now, we will still return the output to not break the chain.
+
         return final_output

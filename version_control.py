@@ -5,7 +5,7 @@ import logging
 import hashlib
 import tempfile
 import shutil
-from datetime import datetime
+from datetime import datetime, timezone
 
 class VersionControl:
     """
@@ -157,7 +157,7 @@ class VersionControl:
 
         # Create metadata content
         metadata = {
-            "timestamp": datetime.utcnow().isoformat() + 'Z',
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "version": save_result["version"],
             "sha256": save_result["sha256"],
             "actor": actor,
