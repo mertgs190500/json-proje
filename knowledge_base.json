@@ -1,1 +1,8 @@
-{"keyword_performance_weights": {}}
+{
+  "session_state": {
+    "last_completed_task_id": null,
+    "active_task_id": null
+  },
+  "learned_insights": [],
+  "performance_metrics": []
+}
