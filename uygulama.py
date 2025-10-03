@@ -8,6 +8,7 @@ import os
 import glob
 from session_manager import SessionManager
 from knowledge_manager import KnowledgeManager
+from version_control import VersionControl
 
 # --- CONFIGURATION ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -91,6 +92,15 @@ class WorkflowOrchestrator:
     def __init__(self):
         self.policy = load_json("orchestrator_policy.json") or {}
         logging.getLogger().setLevel(self.policy.get("logging", {}).get("level", "INFO").upper())
+
+        # Load main config for VersionControl dependency
+        main_config = load_json("project_core/finalv1.json")
+        if not main_config or "fs" not in main_config or "ver" not in main_config["fs"]:
+            raise ValueError("Orchestrator cannot start: 'fs.ver' configuration not found in project_core/finalv1.json")
+
+        # Centralized VersionControl instance
+        self.version_controller = VersionControl(main_config["fs"]["ver"])
+
         self.session = SessionManager(self.policy.get("session"))
         self.workflow_schema = load_json("workflow_schema_v2.json")
         self.contracts = (load_json("data_contracts.json") or {}).get("contracts", {})
@@ -98,8 +108,24 @@ class WorkflowOrchestrator:
         self.state = "IDLE"
         self.rule_engine = RuleEngine()
         self.profile_manager = ProfileManager()
-        self.knowledge_manager = KnowledgeManager()
+
+        # Inject VersionControl into KnowledgeManager
+        self.knowledge_manager = KnowledgeManager(version_controller=self.version_controller)
         logging.info("Orkestratör başlatıldı.")
+
+    def _unpack_inputs(self, data):
+        """
+        Recursively traverses resolved inputs and replaces versioned file dictionaries
+        (e.g., {'filepath': '...', 'sha256': '...'}) with just the filepath string.
+        """
+        if isinstance(data, dict):
+            if 'filepath' in data and 'sha256' in data:
+                logging.info(f"Unpacking file path for next step: {data['filepath']}")
+                return data['filepath']
+            return {k: self._unpack_inputs(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [self._unpack_inputs(item) for item in data]
+        return data
 
     def validate_data_contract(self, contract_name, data):
         if contract_name not in self.contracts:
@@ -184,9 +210,12 @@ class WorkflowOrchestrator:
                         continue
 
                 resolved_inputs = self.resolve_inputs(step.get("i", {}), self.context)
+
+                # NEW: Unpack inputs to extract filepaths from versioned outputs of previous steps
+                unpacked_inputs = self._unpack_inputs(resolved_inputs)
+
                 try:
-                    # Pass the knowledge_manager instance to the module
-                    output = module_instance.execute(resolved_inputs, self.context, self.knowledge_manager)
+                    output = module_instance.execute(unpacked_inputs, self.context, self.knowledge_manager)
                 except Exception as e:
                     logging.error(f"Adım {step_id} yürütülürken hata: {e}", exc_info=True)
                     if self.policy.get("execution", {}).get("stop_on_error", True):

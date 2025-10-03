@@ -8,6 +8,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from project_core.audit_generator import AuditGenerator
 from knowledge_manager import KnowledgeManager
+from version_control import VersionControl
+import shutil
 
 class TestAuditGenerator(unittest.TestCase):
 
@@ -15,9 +17,10 @@ class TestAuditGenerator(unittest.TestCase):
         """Set up the test environment before each test."""
         self.audit_generator = AuditGenerator()
 
-        # Use a temporary file for the knowledge base to avoid side effects
-        self.kb_path = "test_knowledge_base.json"
-        self.knowledge_manager = KnowledgeManager(db_path=self.kb_path)
+        # Setup VersionControl and inject into KnowledgeManager
+        self.version_config = {"pattern": "test_v{N}_{sha12}.json"}
+        self.version_controller = VersionControl(self.version_config)
+        self.knowledge_manager = KnowledgeManager(version_controller=self.version_controller, base_path="test_knowledge_base.json")
 
         # Mock context data
         self.start_time = (datetime.now() - timedelta(minutes=10)).isoformat()
@@ -66,10 +69,9 @@ class TestAuditGenerator(unittest.TestCase):
 
     def tearDown(self):
         """Clean up after each test."""
-        if os.path.exists(self.kb_path):
-            os.remove(self.kb_path)
-        if os.path.exists(self.kb_path + '.lock'):
-             os.remove(self.kb_path + '.lock')
+        # Clean up the versioned outputs directory created during the test
+        if os.path.exists("outputs"):
+            shutil.rmtree("outputs")
 
     def test_execute_report_generation(self):
         """Test the successful generation of a complete audit report."""
