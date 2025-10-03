@@ -1,4 +1,6 @@
 import re
+import logging
+from version_control import VersionControl
 
 class ComplianceChecker:
     """
@@ -22,7 +24,7 @@ class ComplianceChecker:
         except Exception as e:
             return None, f"An unexpected error occurred while accessing the ruleset: {e}"
 
-    def execute(self, inputs, context, db_manager=None):
+    def execute(self, inputs, context, knowledge_manager=None):
         """
         Executes the compliance checks.
 
@@ -51,40 +53,55 @@ class ComplianceChecker:
 
         ruleset, error_msg = self._get_ruleset(context)
         if error_msg:
-            return {'status': 'FAIL', 'issues': [{'rule_id': 'LOAD_ERROR', 'message': error_msg}]}
+            result = {'status': 'FAIL', 'issues': [{'rule_id': 'LOAD_ERROR', 'message': error_msg}]}
+        else:
+            for rule in ruleset:
+                rule_id = rule.get('id')
+                params = rule.get('prm', {})
 
-        for rule in ruleset:
-            rule_id = rule.get('id')
-            params = rule.get('prm', {})
+                if rule_id == 'NO_BANNED_TERMS':
+                    banned_list = params.get('list', [])
+                    for term in banned_list:
+                        if re.search(r'\b' + re.escape(term.lower()) + r'\b', full_text_lower):
+                            issues.append({
+                                'rule_id': rule_id,
+                                'message': f"Forbidden term found: '{term}'"
+                            })
 
-            if rule_id == 'NO_BANNED_TERMS':
-                banned_list = params.get('list', [])
-                for term in banned_list:
-                    if re.search(r'\b' + re.escape(term.lower()) + r'\b', full_text_lower):
+                elif rule_id == 'NO_ALLCAPS_SPAM':
+                    # FIX: This check now runs on the original case-sensitive text.
+                    words = re.findall(r'\b[A-Z]{3,}\b', all_text_for_caps_check)
+                    if words:
                         issues.append({
                             'rule_id': rule_id,
-                            'message': f"Forbidden term found: '{term}'"
+                            'message': f"Potential ALL CAPS spam detected. Words: {', '.join(words)}"
                         })
 
-            elif rule_id == 'NO_ALLCAPS_SPAM':
-                # FIX: This check now runs on the original case-sensitive text.
-                words = re.findall(r'\b[A-Z]{3,}\b', all_text_for_caps_check)
-                if words:
-                    issues.append({
-                        'rule_id': rule_id,
-                        'message': f"Potential ALL CAPS spam detected. Words: {', '.join(words)}"
-                    })
+                elif rule_id == 'NO_MISLEADING_CLAIMS':
+                    claims = params.get('claims', [])
+                    for claim in claims:
+                        if re.search(r'\b' + re.escape(claim.lower()) + r'\b', full_text_lower):
+                            issues.append({
+                                'rule_id': rule_id,
+                                'message': f"Potentially misleading claim found: '{claim}'"
+                            })
 
-            elif rule_id == 'NO_MISLEADING_CLAIMS':
-                 claims = params.get('claims', [])
-                 for claim in claims:
-                     if re.search(r'\b' + re.escape(claim.lower()) + r'\b', full_text_lower):
-                         issues.append({
-                            'rule_id': rule_id,
-                            'message': f"Potentially misleading claim found: '{claim}'"
-                        })
+            if issues:
+                result = {'status': 'FAIL', 'issues': issues}
+            else:
+                result = {'status': 'PASS', 'issues': []}
 
-        if issues:
-            return {'status': 'FAIL', 'issues': issues}
-        else:
-            return {'status': 'PASS', 'issues': []}
+        # Save the report using VersionControl
+        if isinstance(knowledge_manager, VersionControl):
+            try:
+                knowledge_manager.save_with_metadata(
+                    base_path='outputs/compliance_report.json',
+                    data=result,
+                    actor='compliance_checker.py',
+                    reason='Generated compliance report for the listing content.'
+                )
+                logging.info("[ComplianceChecker] Successfully saved compliance report with metadata.")
+            except Exception as e:
+                logging.error(f"[ComplianceChecker] Failed to save report using version control: {e}", exc_info=True)
+
+        return result
