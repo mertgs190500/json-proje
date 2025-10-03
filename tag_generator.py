@@ -1,92 +1,160 @@
+Here is the code:
+
 import logging
+import re
 from collections import Counter
 
 class TagGenerator:
     """
-    Analyzes keyword pools from various sources to select the optimal 13 SEO tags
-    based on a defined strategy and rules.
+    Generates and selects the optimal 13 SEO tags based on a comprehensive analysis of
+    market data, product information, and final SEO content (title, description).
+    The logic adheres to rules specified in the project's configuration, such as
+    character limits, forbidden terms, and diversity requirements.
     """
+
+    def __init__(self):
+        # Rules derived from finalv1.json analysis (/s/12/forbidden, etc.)
+        self.FORBIDDEN_TERMS = {'turkey', 'gift idea', 'free shipping', 'sale', 'discount'}
+        self.TAG_LENGTH_LIMIT = 20
+        self.FINAL_TAG_COUNT = 13
+
+    def _extract_terms(self, text, min_len=3):
+        """Extracts unique, lowercased words from a text string."""
+        if not isinstance(text, str):
+            return set()
+        words = re.findall(r'\b\w+\b', text.lower())
+        return {word for word in words if len(word) >= min_len}
+
+    def _get_root_word(self, phrase):
+        """
+        Gets a representative root for a phrase for deduplication purposes.
+        This is a simple implementation; a more advanced version would use stemming/lemmatization.
+        """
+        words = phrase.lower().split()
+        stemmed_words = []
+        for word in words:
+            # Simple stemmer: remove 's' unless it's 'ss' to handle simple plurals.
+            if len(word) > 2 and word.endswith('s') and not word.endswith('ss'):
+                stemmed_words.append(word[:-1])
+            else:
+                stemmed_words.append(word)
+        
+        # Sort the stemmed words to make the root order-independent
+        return ' '.join(sorted(stemmed_words))
 
     def execute(self, inputs, context, db_manager=None):
         """
         Main execution method called by the orchestrator.
 
         Args:
-            inputs (dict): A dictionary containing 'keyword_pools', 'product_attributes',
-                           and 'final_title'.
+            inputs (dict): A dictionary containing all necessary data pools:
+                           - 'market_analysis': Output from MarketAnalyzer.
+                           - 'keyword_data': Focused keywords from KeywordProcessor.
+                           - 'title_data': Output from TitleOptimizer.
+                           - 'description_data': Output from DescriptionGenerator.
+                           - 'product_attributes': A dictionary of product attributes.
 
         Returns:
             dict: A dictionary containing the 'final_tags' list.
         """
-        logging.info("[TagGenerator] Starting tag generation.")
+        logging.info("[TagGenerator] Starting tag generation process.")
 
-        keyword_pools = inputs.get("keyword_pools", {})
-        product_attributes = inputs.get("product_attributes", {})
-        final_title = inputs.get("final_title", "")
+        # 1. --- Data Aggregation ---
+        # Collect keywords from all relevant sources into a single weighted list.
+        candidate_pool = []
+        
+        # From market analysis
+        market_analysis = inputs.get('market_analysis', {})
+        candidate_pool.extend(market_analysis.get('popular_keywords_top', []) * 3) # Higher weight
+        candidate_pool.extend(market_analysis.get('competitor_signals', {}).get('main_themes', []))
+        candidate_pool.extend(market_analysis.get('market_snapshot', {}).get('keyword_gaps', []))
 
-        # The core logic for selecting the best tags
-        final_tags = self._select_best_tags(keyword_pools, product_attributes, final_title)
+        # From keyword processing
+        keyword_data = inputs.get('keyword_data', {})
+        candidate_pool.extend(keyword_data.get('focus_keywords', []) * 5) # Highest weight
+        candidate_pool.extend(keyword_data.get('supporting_keywords', []) * 2)
 
-        logging.info(f"[TagGenerator] Generated {len(final_tags)} final tags.")
-        return {"final_tags": final_tags}
+        # From final content
+        title_data = inputs.get('title_data', {})
+        final_title = title_data.get('final_title', '')
+        title_terms = self._extract_terms(final_title)
+        candidate_pool.extend(list(title_terms) * 3)
 
-    def _get_root_word(self, word):
-        """
-        A simple function to get the 'root' of a word for deduplication.
-        (e.g., 'rings', 'ringing' -> 'ring'). This can be improved with stemming libraries.
-        """
-        word = word.lower()
-        # A very basic approach
-        for suffix in ['s', 'es', 'ing', 'ed']:
-            if word.endswith(suffix):
-                return word[:-len(suffix)]
-        return word
+        description_data = inputs.get('description_data', {})
+        final_description = description_data.get('final_description', '')
+        description_terms = self._extract_terms(final_description)
+        candidate_pool.extend(list(description_terms))
 
-    def _select_best_tags(self, pools, attributes, title):
-        """
-        Selects the top 13 tags based on source priority, uniqueness, and variety.
-        This simulates the logic from /s/12/rs and /run/s/12/c.
-        """
+        if not candidate_pool:
+            logging.warning("[TagGenerator] Candidate pool is empty. Cannot generate tags.")
+            return {"final_tags": []}
 
-        # 1. Gather all potential tags from different sources
-        # The order here defines the priority (source mix)
-        potential_tags = []
-        potential_tags.extend(pools.get("core_keywords", []))
-        potential_tags.extend(pools.get("long_tail_keywords", []))
+        # 2. --- Filtering and Cleaning ---
+        logging.info(f"Initial candidate pool size: {len(candidate_pool)}")
+        
+        # Get product attributes for deduplication
+        product_attributes = inputs.get('product_attributes', {})
+        attribute_values = {str(v).lower() for v in product_attributes.values() if isinstance(v, str)}
 
-        # Add tags from product attributes (e.g., color, material)
-        for key, value in attributes.items():
-            if isinstance(value, str):
-                potential_tags.append(value)
-            elif isinstance(value, list):
-                potential_tags.extend(value)
+        cleaned_candidates = []
+        for tag in candidate_pool:
+            tag_lower = tag.lower().strip()
 
-        # Add important words from the title
-        potential_tags.extend(title.split())
+            # Rule: Character length limit (<= 20)
+            if len(tag_lower) > self.TAG_LENGTH_LIMIT:
+                continue
+            
+            # Rule: Forbid specific terms
+            if any(term in tag_lower for term in self.FORBIDDEN_TERMS):
+                continue
+                
+            # Rule: Filter out single-word tags (prioritize multi-word)
+            if ' ' not in tag_lower:
+                continue
 
-        # 2. Clean and score tags
-        # For this simulation, we'll just count frequency, but this could be more complex.
-        # We also filter out very short words (e.g., 'a', 'an', 'in')
-        cleaned_tags = [tag.lower().strip() for tag in potential_tags if len(tag) > 2]
-        tag_counts = Counter(cleaned_tags)
+            # Rule: Deduplicate against product attributes
+            if tag_lower in attribute_values:
+                continue
 
-        # 3. Select the final 13 tags
+            cleaned_candidates.append(tag_lower)
+            
+        logging.info(f"Pool size after cleaning and filtering: {len(cleaned_candidates)}")
+
+        # 3. --- Scoring & Ranking ---
+        # The scoring formula from /pl/scoring is simulated here by frequency,
+        # which acts as a proxy for relevance and market usage.
+        tag_counts = Counter(cleaned_candidates)
+        # Sort by frequency (score) in descending order
+        sorted_tags = [tag for tag, count in tag_counts.most_common()]
+
+        # 4. --- Diversity and Final Selection ---
         final_tags = []
         used_root_words = set()
 
-        # Sort by frequency (as a proxy for importance/relevance)
-        sorted_tags = sorted(tag_counts.items(), key=lambda x: x[1], reverse=True)
-
-        for tag, count in sorted_tags:
-            if len(final_tags) >= 13:
+        for tag in sorted_tags:
+            if len(final_tags) >= self.FINAL_TAG_COUNT:
                 break
 
-            root_word = self._get_root_word(tag)
-            # Rule: Avoid repeating root words
-            if root_word not in used_root_words:
-                # Rule: Ensure tags fit within Etsy's 20-character limit
-                if len(tag) <= 20:
+            root = self._get_root_word(tag)
+            # Rule: Ensure no root word is repeated
+            if root not in used_root_words:
+                final_tags.append(tag)
+                used_root_words.add(root)
+        
+        # If we still don't have 13 tags, we can backfill with single-word tags if necessary
+        # (This part is an enhancement to ensure we always return 13 tags if possible)
+        if len(final_tags) < self.FINAL_TAG_COUNT:
+            single_word_candidates = [t.lower().strip() for t in candidate_pool if ' ' not in t.lower().strip()]
+            single_word_counts = Counter(single_word_candidates)
+            sorted_singles = [tag for tag, count in single_word_counts.most_common()]
+            
+            for tag in sorted_singles:
+                if len(final_tags) >= self.FINAL_TAG_COUNT:
+                    break
+                root = self._get_root_word(tag)
+                if root not in used_root_words and len(tag) <= self.TAG_LENGTH_LIMIT:
                     final_tags.append(tag)
-                    used_root_words.add(root_word)
+                    used_root_words.add(root)
 
-        return final_tags
+        logging.info(f"[TagGenerator] Successfully generated {len(final_tags)} final tags.")
+        return {"final_tags": final_tags[:self.FINAL_TAG_COUNT]}
