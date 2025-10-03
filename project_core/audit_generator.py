@@ -1,6 +1,7 @@
 import json
 import logging
 from datetime import datetime
+from version_control import VersionControl
 
 class AuditGenerator:
     """
@@ -113,11 +114,33 @@ class AuditGenerator:
 
             final_report = "\n".join(self.report_lines)
 
-            return {
+            output_data = {
                 "status": "SUCCESS",
                 "data": {"report_content": final_report, "format": "markdown"},
                 "message": "Denetim raporu başarıyla oluşturuldu."
             }
+
+            try:
+                vc_config = context.get('fs', {}).get('ver')
+                if not vc_config:
+                    logging.error("[AuditGenerator] Versioning configuration ('fs.ver') not found in context.")
+                    output_data['message'] += " | WARNING: Versioning config missing, report not saved."
+                else:
+                    vc = VersionControl(versioning_config=vc_config)
+                    save_result = vc.save_with_metadata(
+                        base_path='outputs/workflow_audit_report.json',
+                        data=output_data['data'],
+                        actor='audit_generator.py',
+                        reason='Generated full workflow audit report.'
+                    )
+                    output_data['artefact'] = save_result
+                    logging.info("Successfully saved workflow audit report.")
+            except Exception as e:
+                logging.error(f"Failed to save audit report: {e}", exc_info=True)
+                output_data['status'] = 'WARNING'
+                output_data['message'] += f" | WARNING: Failed to save report via VersionControl: {e}"
+
+            return output_data
 
         except Exception as e:
             logging.error(f"Denetim raporu oluşturulurken bir hata oluştu: {e}", exc_info=True)

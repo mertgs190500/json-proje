@@ -1,4 +1,6 @@
 import logging
+from version_control import VersionControl
+import os
 
 class PublishChecker:
     """
@@ -45,12 +47,11 @@ class PublishChecker:
 
     def execute(self, inputs, context, db_manager=None):
         """
-        Executes the pre-publish checklist against the assembled listing.
+        Executes the pre-publish checklist and saves a versioned report.
         """
         checklist_results = []
         notes = []
 
-        # Load rules and inputs
         rules = self._get_rules(context)
         if not rules:
             return {
@@ -61,7 +62,7 @@ class PublishChecker:
 
         checklist_inputs = self._get_inputs(context)
 
-        # Rule: Check listing assembly status
+        # Rule evaluations...
         if 'CHECK_LISTING_STATUS' in rules:
             status = checklist_inputs.get('listing_status')
             if status == 'PASS':
@@ -70,7 +71,6 @@ class PublishChecker:
                 checklist_results.append({'rule': 'CHECK_LISTING_STATUS', 'status': 'FAIL'})
                 notes.append(f"Listing assembly status is '{status}', but must be 'PASS'.")
 
-        # Rule: Check export file and hash
         if 'CHECK_EXPORT_ARTIFACTS' in rules:
             file_path = checklist_inputs.get('export_file_path')
             sha256 = checklist_inputs.get('export_sha256')
@@ -80,7 +80,6 @@ class PublishChecker:
                 checklist_results.append({'rule': 'CHECK_EXPORT_ARTIFACTS', 'status': 'FAIL'})
                 notes.append(f"Export artifacts are incomplete. File path: '{file_path}', SHA256: '{sha256}'.")
 
-        # Rule: Check compliance status
         if 'CHECK_COMPLIANCE_STATUS' in rules:
             status = checklist_inputs.get('compliance_status')
             if status == 'PASS':
@@ -89,7 +88,6 @@ class PublishChecker:
                 checklist_results.append({'rule': 'CHECK_COMPLIANCE_STATUS', 'status': 'FAIL'})
                 notes.append(f"Compliance status is '{status}', but must be 'PASS'.")
 
-        # Rule: Check Ads Sync status
         if 'CHECK_ADS_SYNC_STATUS' in rules:
             status = checklist_inputs.get('ads_sync_status')
             if status in ['PASS', 'WARN']:
@@ -98,23 +96,43 @@ class PublishChecker:
                 checklist_results.append({'rule': 'CHECK_ADS_SYNC_STATUS', 'status': 'FAIL'})
                 notes.append(f"Ads sync status is '{status}', which is not allowed.")
 
-        # Rule: Final Media Check
         if 'CHECK_MEDIA_MANIFEST' in rules:
             media_manifest = checklist_inputs.get('media_manifest')
-            # Assuming a simple check for non-empty manifest
             if media_manifest and isinstance(media_manifest, list) and len(media_manifest) > 0:
                  checklist_results.append({'rule': 'CHECK_MEDIA_MANIFEST', 'status': 'PASS'})
             else:
                 checklist_results.append({'rule': 'CHECK_MEDIA_MANIFEST', 'status': 'FAIL'})
                 notes.append("Final media check failed; manifest is empty or invalid.")
 
-        # Determine final publish status
         final_status = 'READY'
         if notes:
             final_status = 'BLOCKED'
 
-        return {
+        output_data = {
             'publish_status': final_status,
             'checklist_results': checklist_results,
             'notes': " | ".join(notes)
         }
+
+        try:
+            vc_config = context.get('fs', {}).get('ver')
+            if not vc_config:
+                self.logger.error("Versioning configuration ('fs.ver') not found in context.")
+                output_data['notes'] += " | ERROR: Versioning config missing, report not saved."
+                return output_data
+
+            vc = VersionControl(versioning_config=vc_config)
+            save_result = vc.save_with_metadata(
+                base_path='outputs/publish_checklist_report.json',
+                data=output_data,
+                actor='publish_checker.py',
+                reason='Generated pre-publish checklist report.'
+            )
+            output_data['artefact'] = save_result
+            self.logger.info("Successfully saved publish checklist report.")
+
+        except Exception as e:
+            self.logger.error(f"Failed to save publish checklist report: {e}", exc_info=True)
+            output_data['notes'] += f" | ERROR: Failed to save report via VersionControl: {e}"
+
+        return output_data
