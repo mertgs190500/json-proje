@@ -1,70 +1,90 @@
-import logging
+import re
 
 class ComplianceChecker:
     """
-    Checks all generated text and media content for compliance with internal
-    and external policies (e.g., Etsy, Google).
+    Checks SEO content against a set of compliance rules defined in the project configuration.
     """
+
+    def _get_ruleset(self, context):
+        """
+        Safely retrieves the ruleset from the context.
+        The orchestrator is expected to resolve any $refs and place the
+        ruleset at the specified path.
+        """
+        try:
+            # Path confirmed in previous step: /run/s/14/rs/ruleset
+            ruleset = context['run']['s']['14']['rs']['ruleset']
+            if not isinstance(ruleset, list):
+                return None, f"Ruleset at '/run/s/14/rs/ruleset' is not a list."
+            return ruleset, None
+        except KeyError:
+            return None, "Compliance ruleset not found at context path '/run/s/14/rs/ruleset'."
+        except Exception as e:
+            return None, f"An unexpected error occurred while accessing the ruleset: {e}"
 
     def execute(self, inputs, context, db_manager=None):
         """
-        Main execution method. It validates the listing data against a set of rules.
+        Executes the compliance checks.
 
         Args:
-            inputs (dict): A dictionary containing the listing data to be checked,
-                           e.g., {'title': '...', 'description': '...', 'tags': [...]}.
+            inputs (dict): A dictionary containing the content to check.
+                           Expected keys: 'title', 'description', 'tags'.
+            context (dict): The workflow context, containing configuration and rules.
+            db_manager: The database manager (not used in this module).
 
         Returns:
-            dict: A status report, e.g., {"status": "PASS", "issues": []}.
+            dict: A dictionary with the compliance check results.
+                  {'status': 'PASS'|'FAIL', 'issues': [...]}.
         """
-        logging.info("[ComplianceChecker] Starting compliance check.")
+        title = inputs.get('title', '')
+        description = inputs.get('description', '')
+        tags = inputs.get('tags', [])
 
-        listing_data = inputs.get("listing_data", {})
-        policy_rules = inputs.get("policy_rules", {}) # Rules loaded from config
+        # For case-insensitive checks
+        tags_str_lower = ' '.join(map(str, tags)).lower()
+        full_text_lower = f"{title.lower()} {description.lower()} {tags_str_lower}"
+
+        # For case-sensitive checks (like ALL CAPS)
+        all_text_for_caps_check = f"{title} {description}"
 
         issues = []
 
-        # --- Rule Simulation ---
-        # In a real scenario, these rules would be more extensive and loaded from finalv1.json.
-        forbidden_terms = policy_rules.get("forbidden_terms", ["restricted", "prohibited_brand"])
-        required_disclaimers = policy_rules.get("required_disclaimers", ["Handmade item"])
+        ruleset, error_msg = self._get_ruleset(context)
+        if error_msg:
+            return {'status': 'FAIL', 'issues': [{'rule_id': 'LOAD_ERROR', 'message': error_msg}]}
 
-        # Combine all text content for easier checking
-        full_text = (
-            listing_data.get("title", "") + " " +
-            listing_data.get("description", "") + " " +
-            " ".join(listing_data.get("tags", []))
-        ).lower()
+        for rule in ruleset:
+            rule_id = rule.get('id')
+            params = rule.get('prm', {})
 
-        # 1. Check for forbidden terms
-        for term in forbidden_terms:
-            if term.lower() in full_text:
-                issues.append({
-                    "code": "FORBIDDEN_TERM",
-                    "message": f"Detected forbidden term: '{term}'.",
-                    "severity": "FAIL"
-                })
+            if rule_id == 'NO_BANNED_TERMS':
+                banned_list = params.get('list', [])
+                for term in banned_list:
+                    if re.search(r'\b' + re.escape(term.lower()) + r'\b', full_text_lower):
+                        issues.append({
+                            'rule_id': rule_id,
+                            'message': f"Forbidden term found: '{term}'"
+                        })
 
-        # 2. Check for required disclaimers
-        description_text = listing_data.get("description", "").lower()
-        for disclaimer in required_disclaimers:
-            if disclaimer.lower() not in description_text:
-                issues.append({
-                    "code": "MISSING_DISCLAIMER",
-                    "message": f"Missing required disclaimer: '{disclaimer}'.",
-                    "severity": "WARN"
-                })
+            elif rule_id == 'NO_ALLCAPS_SPAM':
+                # FIX: This check now runs on the original case-sensitive text.
+                words = re.findall(r'\b[A-Z]{3,}\b', all_text_for_caps_check)
+                if words:
+                    issues.append({
+                        'rule_id': rule_id,
+                        'message': f"Potential ALL CAPS spam detected. Words: {', '.join(words)}"
+                    })
 
-        # --- Determine Final Status ---
-        final_status = "PASS"
-        if any(issue['severity'] == 'FAIL' for issue in issues):
-            final_status = "FAIL"
-        elif issues: # If there are only warnings
-            final_status = "WARN"
+            elif rule_id == 'NO_MISLEADING_CLAIMS':
+                 claims = params.get('claims', [])
+                 for claim in claims:
+                     if re.search(r'\b' + re.escape(claim.lower()) + r'\b', full_text_lower):
+                         issues.append({
+                            'rule_id': rule_id,
+                            'message': f"Potentially misleading claim found: '{claim}'"
+                        })
 
-        logging.info(f"[ComplianceChecker] Check complete. Status: {final_status}, Issues found: {len(issues)}.")
-
-        return {
-            "status": final_status,
-            "issues": issues
-        }
+        if issues:
+            return {'status': 'FAIL', 'issues': issues}
+        else:
+            return {'status': 'PASS', 'issues': []}
