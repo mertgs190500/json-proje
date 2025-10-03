@@ -354,7 +354,10 @@
       "image_5"
     ],
     "fail_on_missing": true,
-    "format": "csv"
+    "format": "csv",
+    "naming": {
+      "pattern": "PRODUCT_EXPORT_%Y%m%d_%H%M%S_v{N}.csv"
+    }
   },
   "fs": {
     "cr_at": "2025-09-08 08:06:53",
@@ -2240,6 +2243,7 @@
                 "$ref": "#/_defs/def_772a006c"
               },
               "n": "Final Listing Assembly / Publish Prep",
+        "module": "listing_assembler",
               "o": {
                 "$ref": "#/_defs/def_3be44f22"
               },
@@ -2290,6 +2294,7 @@
                 "$ref": "#/_defs/def_cb1aaeac"
               },
               "n": "Export CSV/Excel",
+        "module": "exporter",
               "output_policy": {
                 "$ref": "#/_defs/def_f429d8c0"
               },
@@ -13530,6 +13535,7 @@
         "$ref": "#/_defs/def_772a006c"
       },
       "n": "Final Listing Assembly / Publish Prep",
+        "module": "listing_assembler",
       "o": {
         "$ref": "#/_defs/def_3be44f22"
       },
@@ -13585,6 +13591,7 @@
         "$ref": "#/_defs/def_cb1aaeac"
       },
       "n": "Export CSV/Excel",
+        "module": "exporter",
       "output_policy": {
         "$ref": "#/_defs/def_f429d8c0"
       },

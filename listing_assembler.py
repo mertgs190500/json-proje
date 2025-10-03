@@ -1,44 +1,48 @@
-import logging
+import json
 
 class ListingAssembler:
-    """
-    Assembles all individual content pieces (title, description, tags, etc.)
-    into a single, final listing object ready for export.
-    """
+    def __init__(self, config):
+        self.config = config
 
     def execute(self, inputs, context, db_manager=None):
         """
-        Main execution method. It combines all provided data into a structured object.
-
-        Args:
-            inputs (dict): A dictionary containing all the generated content pieces
-                           from previous steps, e.g., {'title_data': ..., 'tags_data': ...}.
-
-        Returns:
-            dict: A dictionary containing the 'final_listing_object'.
+        Assembles the final product listing from various generated parts.
         """
-        logging.info("[ListingAssembler] Assembling final listing object.")
+        compliance_report = context.get('compliance_report', {})
+        if compliance_report.get('status') != 'PASS':
+            return {'status': 'FAIL', 'message': 'Compliance check did not pass. Halting assembly.', 'data': None}
 
-        # This structure should be compatible with the export columns defined in finalv1.json (/exp/cols)
-        final_listing = {
-            "sku": inputs.get("product_sku", "SKU-001"),
-            "title": inputs.get("title_data", {}).get("title", ""),
-            "description": inputs.get("description_data", {}).get("formatted_description", ""),
-            "tags": inputs.get("tags_data", {}).get("final_tags", []),
-            "attributes": inputs.get("packaging_strategy", {}).get("attributes", {}),
-            "pricing": inputs.get("product_data", {}).get("pricing", {}),
-            "shipping_profile_id": inputs.get("shop_policies", {}).get("shipping_profile_id", "default_shipping"),
-            "image_paths": inputs.get("visual_data", {}).get("image_paths", []),
-            "metadata": {
-                "compliance_status": inputs.get("compliance_report", {}).get("status", "UNKNOWN"),
-                "source_workflow_id": context.get("workflow_id", "unknown_workflow")
-            }
-        }
+        # Get the required columns from the configuration
+        export_columns = self.config.get('exp', {}).get('cols', [])
 
-        # Perform a final check for completeness
-        if not final_listing["title"] or not final_listing["description"] or not final_listing["tags"]:
-            logging.warning("[ListingAssembler] Final assembly has missing core components (title, desc, or tags).")
+        final_listing = {}
 
-        logging.info("[ListingAssembler] Final listing object assembled successfully.")
+        # Populate the final listing dictionary based on the defined columns
+        # This is a simplified mapping. A real implementation would have more robust logic.
+        final_listing['record_id'] = context.get('product_data', {}).get('id', '')
+        final_listing['op_type'] = 'CREATE'
+        final_listing['is_deleted'] = 'false'
+        final_listing['product.title'] = context.get('title', '')
+        final_listing['product.description'] = context.get('description', '')
+        final_listing['product.tags'] = ",".join(context.get('tags', []))
 
-        return {"final_listing_object": final_listing}
+        # Example for pricing - assuming it's in product_data
+        pricing_info = context.get('product_data', {}).get('pricing', {})
+        final_listing['pricing.price_value'] = pricing_info.get('price', '')
+        final_listing['pricing.price_currency'] = pricing_info.get('currency', 'USD')
+
+        # Example for images - assuming they are in context
+        images = context.get('images', [])
+        for i in range(5):
+            col_name = f'image_{i+1}'
+            if i < len(images):
+                final_listing[col_name] = images[i]
+            else:
+                final_listing[col_name] = ''
+
+        # Ensure all columns are present, fill with empty strings if not
+        for col in export_columns:
+            if col not in final_listing:
+                final_listing[col] = ''
+
+        return {'status': 'PASS', 'message': 'Listing assembled successfully.', 'data': final_listing}
