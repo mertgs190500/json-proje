@@ -112,5 +112,28 @@ class TestDescriptionGenerator(unittest.TestCase):
         result = self.generator.execute({}, {}, None)
         self.assertIn("Error", result['description_final'])
 
+    def test_all_logistics_information_is_included(self):
+        """
+        Verify that all mandatory logistics phrases from the advisory guide
+        are included in the final description.
+        """
+        inputs = {
+            "market_analysis_results": self.market_analysis,
+            "title_final": self.final_title,
+            "product_data": self.product_data
+        }
+        result = self.generator.execute(inputs, {}, None)
+        description = result['description_final']
+
+        # Get the required phrases from the loaded rules
+        guide = self.generator.rules.get('structure_guide', {})
+        must_includes = guide.get('must_include_from_product_info', [])
+
+        self.assertGreater(len(must_includes), 0, "No logistics phrases found in the loaded rules to test against.")
+
+        for item in must_includes:
+            with self.subTest(item=item):
+                self.assertIn(item, description, f"The required logistic info '{item}' was not found in the description.")
+
 if __name__ == '__main__':
     unittest.main()
