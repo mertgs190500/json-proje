@@ -7,6 +7,7 @@ import importlib.util
 import os
 import glob
 from session_manager import SessionManager
+from knowledge_manager import KnowledgeManager
 
 # --- CONFIGURATION ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -83,16 +84,7 @@ class ProfileManager:
             return {**base_profile, **profile}
         return profile
 
-class DBManager:
-    """Manages interactions with the flat-file JSON database."""
-    def load_db(self, filename): return load_json(filename)
-    def save_db(self, filename, data):
-        try:
-            with open(filename, 'w', encoding='utf-8') as f:
-                json.dump(data, f, indent=2, ensure_ascii=False)
-            logging.info(f"Veritabanı başarıyla kaydedildi: {filename}")
-        except Exception as e:
-            logging.error(f"Veritabanı kaydedilemedi: {filename}. Hata: {e}")
+# DBManager class is now obsolete and has been replaced by KnowledgeManager.
 
 class WorkflowOrchestrator:
     """Orchestrates the entire workflow based on a configuration file or dictionary."""
@@ -106,7 +98,7 @@ class WorkflowOrchestrator:
         self.state = "IDLE"
         self.rule_engine = RuleEngine()
         self.profile_manager = ProfileManager()
-        self.db_manager = DBManager()
+        self.knowledge_manager = KnowledgeManager()
         logging.info("Orkestratör başlatıldı.")
 
     def validate_data_contract(self, contract_name, data):
@@ -193,7 +185,8 @@ class WorkflowOrchestrator:
 
                 resolved_inputs = self.resolve_inputs(step.get("i", {}), self.context)
                 try:
-                    output = module_instance.execute(resolved_inputs, self.context, self.db_manager)
+                    # Pass the knowledge_manager instance to the module
+                    output = module_instance.execute(resolved_inputs, self.context, self.knowledge_manager)
                 except Exception as e:
                     logging.error(f"Adım {step_id} yürütülürken hata: {e}", exc_info=True)
                     if self.policy.get("execution", {}).get("stop_on_error", True):
