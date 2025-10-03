@@ -1,6 +1,20 @@
 import logging
 import pandas as pd
 import io
+import json
+from version_control import VersionControl
+
+def load_json(filename):
+    """Loads a JSON file with UTF-8 encoding."""
+    try:
+        with open(filename, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        logging.error(f"Dosya bulunamadı: {filename}")
+        return None
+    except json.JSONDecodeError:
+        logging.error(f"JSON formatı geçersiz: {filename}")
+        return None
 
 class CsvIngestor:
     def _clean_headers(self, headers):
@@ -107,7 +121,33 @@ class CsvIngestor:
         if len(df) < initial_rows:
             logging.info(f"  > Tamamen boş olan {initial_rows - len(df)} satır kaldırıldı.")
 
-        # Step 4: Finalize and return
+        # Step 4: Save the cleaned data to a versioned CSV file
+        try:
+            config = load_json('project_core/finalv1.json')
+            vc_policy = config.get('fs', {}).get('ver', {})
+            version_controller = VersionControl(versioning_config=vc_policy)
+
+            csv_data_as_string = df.to_csv(index=False, encoding='utf-8-sig')
+
+            # Construct a clean base path for the output file
+            output_base_name = file_path.split('/')[-1].split('.')[0]
+            output_path = f"runtime/csv/{output_base_name}_clean.csv"
+
+            save_result = version_controller.save_new_version(
+                base_path=output_path,
+                data=csv_data_as_string
+            )
+
+            if save_result:
+                logging.info(f"Yeni versiyon kaydedildi: {save_result['filepath']}")
+            else:
+                logging.error(f"Versiyon kaydı başarısız: {output_path}")
+
+        except Exception as e:
+            logging.error(f"CSV versiyonu kaydedilirken hata oluştu: {e}", exc_info=True)
+            # We will not fail the whole step, just log the error.
+
+        # Step 5: Finalize and return original output to maintain orchestrator contract
         processed_data = df.to_dict('records')
         message = f"İşlem tamamlandı. {len(processed_data)} satır işlendi."
         logging.info(f"[CsvIngestor] {message}")

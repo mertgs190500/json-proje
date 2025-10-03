@@ -61,26 +61,35 @@ class VersionControl:
     def save_new_version(self, base_path, data):
         """
         Saves data to a new, versioned file using an atomic write operation.
+        Handles dicts (serialized to JSON), strings, and raw bytes.
 
         Args:
             base_path (str): The logical base path for the file (e.g., 'final_set/results.json').
-            data (dict): The JSON data (as a dictionary) to be saved.
+            data (dict | str | bytes): The data to be saved.
 
         Returns:
             dict: A dictionary containing the filepath, version, and sha256 hash.
         """
-        if not isinstance(data, dict):
-            raise TypeError("Data must be a dictionary for JSON serialization.")
-
         try:
             # 1. Prepare data and calculate hash
-            serialized_data = json.dumps(data, indent=2, ensure_ascii=False, sort_keys=True).encode('utf-8')
+            if isinstance(data, dict):
+                serialized_data = json.dumps(data, indent=2, ensure_ascii=False, sort_keys=True).encode('utf-8')
+                default_ext = '.json'
+            elif isinstance(data, str):
+                serialized_data = data.encode('utf-8')
+                default_ext = ''
+            elif isinstance(data, bytes):
+                serialized_data = data
+                default_ext = ''
+            else:
+                raise TypeError("Data must be a dictionary, string, or bytes.")
+
             sha256_hash = hashlib.sha256(serialized_data).hexdigest()
 
             # 2. Determine file naming
             base_name, ext = os.path.splitext(os.path.basename(base_path))
             if not ext:
-                ext = '.json' # Default extension
+                ext = default_ext
 
             next_version = self._get_next_version(base_name, ext)
 
