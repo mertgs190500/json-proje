@@ -1,79 +1,44 @@
-import logging
-import json
 import csv
 import os
-from version_control import VersionControl
+from datetime import datetime
 
 class Exporter:
-    """
-    Exports the final assembled listing object to one or more file formats,
-    utilizing the VersionControl module to prevent overwrites.
-    """
-
-    def __init__(self):
-        # Initialize the version controller. Policy could be passed via inputs if needed.
-        self.vc = VersionControl()
+    def __init__(self, config):
+        self.config = config
 
     def execute(self, inputs, context, db_manager=None):
         """
-        Main execution method. Saves the listing object to disk in the specified formats.
+        Exports the final product listing to a CSV file.
         """
-        logging.info("[Exporter] Starting versioned export process.")
+        final_listing = inputs.get('assembled_listing')
+        if not final_listing:
+            return {'status': 'FAIL', 'message': 'No assembled listing provided to exporter.', 'data': None}
 
-        listing_object = inputs.get("listing_object")
-        formats = inputs.get("formats", ["json"])
-        output_path_base = inputs.get("output_path_base", "output/listing")
+        try:
+            # Generate the filename
+            naming_pattern = self.config.get('exp', {}).get('naming', {}).get('pattern', 'PRODUCT_EXPORT_%Y%m%d_%H%M%S_v1.csv')
+            # A simple versioning mechanism, would need to be more robust in a real scenario
+            version = 1
+            filename = datetime.now().strftime(naming_pattern.format(N=version))
 
-        if not listing_object:
-            logging.error("[Exporter] No listing object provided to export.")
-            return {"exported_files": {}}
+            output_dir = 'output/fs/export'
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
 
-        exported_files = {}
+            filepath = os.path.join(output_dir, filename)
 
-        for fmt in formats:
-            # The base path for versioning will be like 'output/listing.json'
-            version_base_path = f"{output_path_base}.{fmt}"
+            # Get column order from config
+            export_columns = self.config.get('exp', {}).get('cols', [])
 
-            # Prepare data based on format
-            data_to_save = listing_object
-            if fmt.lower() == "csv":
-                # For CSV, we save the flattened dictionary as a string
-                flat_data = self._flatten_dict(listing_object)
-                # This is a simplified representation for CSV saving via version_control
-                # In a real scenario, the version_control module would need to handle CSV writing.
-                data_to_save = self._dict_to_csv_string(flat_data)
+            # Write to CSV
+            with open(filepath, 'w', newline='', encoding='utf-8') as csvfile:
+                writer = csv.DictWriter(csvfile, fieldnames=export_columns)
+                writer.writeheader()
+                # Ensure only the specified columns are written, in the correct order
+                row_to_write = {col: final_listing.get(col, '') for col in export_columns}
+                writer.writerow(row_to_write)
 
-            # Use the version controller to save the file
-            new_filepath = self.vc.save_new_version(version_base_path, data_to_save)
+            return {'status': 'PASS', 'message': f'Listing exported successfully to {filepath}', 'data': {'filepath': filepath}}
 
-            if new_filepath:
-                exported_files[fmt] = new_filepath
-
-        logging.info(f"[Exporter] Export complete. Files created: {list(exported_files.values())}")
-        return {"exported_files": exported_files}
-
-    def _dict_to_csv_string(self, data_dict):
-        """Converts a dictionary to a CSV string (header + 1 row)."""
-        import io
-        output = io.StringIO()
-        writer = csv.DictWriter(output, fieldnames=data_dict.keys())
-        writer.writeheader()
-        writer.writerow(data_dict)
-        return output.getvalue()
-
-    def _flatten_dict(self, d, parent_key='', sep='_'):
-        """
-        Flattens a nested dictionary for CSV export.
-        e.g., {'a': {'b': 1}} -> {'a_b': 1}
-        """
-        items = {}
-        for k, v in d.items():
-            new_key = parent_key + sep + k if parent_key else k
-            if isinstance(v, dict):
-                items.update(self._flatten_dict(v, new_key, sep=sep))
-            elif isinstance(v, list):
-                # Convert lists to a string to fit in a single CSV cell
-                items[new_key] = ", ".join(map(str, v))
-            else:
-                items[new_key] = v
-        return items
+        except Exception as e:
+            return {'status': 'FAIL', 'message': f'An error occurred during export: {str(e)}', 'data': None}
