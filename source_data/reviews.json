@@ -1,0 +1,30 @@
+[
+  {
+    "review_id": "r001",
+    "order_id": "1001",
+    "reviewer_name": "Alice",
+    "star_rating": 5,
+    "message": "Absolutely beautiful craftsmanship! I love the necklace, it's perfect."
+  },
+  {
+    "review_id": "r002",
+    "order_id": "1002",
+    "reviewer_name": "Bob",
+    "star_rating": 2,
+    "message": "The color is deceiving and looks different from the picture. Also, the clasp is weak and feels like it might break."
+  },
+  {
+    "review_id": "r003",
+    "order_id": "1003",
+    "reviewer_name": "Charlie",
+    "star_rating": 4,
+    "message": "Good quality, fast shipping. The size is a bit smaller than I expected, but it's okay."
+  },
+  {
+    "review_id": "r004",
+    "order_id": "1004",
+    "reviewer_name": "Diana",
+    "star_rating": 1,
+    "message": "A complete problem from start to finish. The item arrived broken."
+  }
+]
