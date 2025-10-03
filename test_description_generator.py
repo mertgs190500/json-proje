@@ -10,7 +10,7 @@ class TestDescriptionGenerator(unittest.TestCase):
     def setUp(self):
         """Set up a new DescriptionGenerator instance and mock data before each test."""
         self.generator = DescriptionGenerator()
-
+        
         # Mock inputs mimicking the orchestrator's context
         self.product_data = {
             "materials": ["14K Gold", "Moissanite"],
@@ -56,7 +56,7 @@ class TestDescriptionGenerator(unittest.TestCase):
         }
         result = self.generator.execute(inputs, {}, None)
         report = result['validation_report']
-
+        
         self.assertIsInstance(report, dict)
         self.assertIn("overall_status", report)
         self.assertIn("checks", report)
@@ -73,14 +73,14 @@ class TestDescriptionGenerator(unittest.TestCase):
         # The default generated description should be valid
         result = self.generator.execute(inputs, {}, None)
         report = result['validation_report']
-
+        
         self.assertEqual(report['overall_status'], 'PASS')
 
     def test_description_with_forbidden_word_fails(self):
         """Test that a description with a forbidden term fails validation."""
         # Manually create a description with a forbidden word
         self.generator.rules['validation_rules']['forbidden_terms_always'] = ['free', 'plated']
-
+        
         description = "This is a great ring with free shipping."
         report = self.generator._validate_description(description, self.market_analysis)
 
@@ -90,7 +90,7 @@ class TestDescriptionGenerator(unittest.TestCase):
     def test_description_too_short_fails_length_check(self):
         """Test that a short description fails the length validation."""
         self.generator.rules['validation_rules']['description_min_chars'] = 500
-
+        
         description = "Short description."
         report = self.generator._validate_description(description, self.market_analysis)
 
@@ -100,7 +100,7 @@ class TestDescriptionGenerator(unittest.TestCase):
     def test_missing_focus_keyword_in_hook_fails(self):
         """Test that a description missing the focus keyword in the hook fails validation."""
         description = "A sentence without the main keyword. " + "a" * 300 # to pass length check
-
+        
         # This market analysis has "Handmade Gold Ring" as the primary focus keyword
         report = self.generator._validate_description(description, self.market_analysis)
 
@@ -124,11 +124,11 @@ class TestDescriptionGenerator(unittest.TestCase):
         }
         result = self.generator.execute(inputs, {}, None)
         description = result['description_final']
-
+        
         # Get the required phrases from the loaded rules
         guide = self.generator.rules.get('structure_guide', {})
         must_includes = guide.get('must_include_from_product_info', [])
-
+        
         self.assertGreater(len(must_includes), 0, "No logistics phrases found in the loaded rules to test against.")
 
         for item in must_includes:
