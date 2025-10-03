@@ -2243,7 +2243,7 @@
                 "$ref": "#/_defs/def_772a006c"
               },
               "n": "Final Listing Assembly / Publish Prep",
-              "module": "listing_assembler",
+        "module": "listing_assembler",
               "o": {
                 "$ref": "#/_defs/def_3be44f22"
               },
@@ -2294,7 +2294,7 @@
                 "$ref": "#/_defs/def_cb1aaeac"
               },
               "n": "Export CSV/Excel",
-              "module": "exporter",
+        "module": "exporter",
               "output_policy": {
                 "$ref": "#/_defs/def_f429d8c0"
               },
@@ -2551,9 +2551,7 @@
             "20": {
               "n": "Audit",
               "module": "project_core/audit_generator.py",
-              "requires": [
-                "19"
-              ],
+              "requires": ["19"],
               "i": {
                 "summary_info": {
                   "config_version": "rel-v8-20250909-180916-unlock-10-11-14-15"
@@ -10529,28 +10527,6 @@
           "Proactive Negative Generation: Based on Step 0 product info (e.g., if 'solid gold'), generate a list of irrelevant but high-traffic terms (e.g., 'plated', 'vermeil', 'filled')."
         ]
       },
-      "7a": {
-        "purp": "Pazar ve Fiyat Öngörüsü",
-        "requires": [
-          "7"
-        ],
-        "i": [
-          "market.snapshot{}",
-          "product.info{}"
-        ],
-        "o": [
-          "market_and_price_forecast.json"
-        ],
-        "rs": [
-          "Analyze competitor pricing from market.snapshot against our product's cost/variation structure from product.info.",
-          "Identify pricing sweet spots, potential market gaps, and price elasticity signals.",
-          "Output a forecast report with recommended price tiers (e.g., entry, median, premium) and rationale."
-        ],
-        "actor": "market_analyzer.py",
-        "auto_c": true,
-        "await_u": false,
-        "req_ctx": true
-      },
       "8": {
         "analysis_rules": {
           "$ref": "#/_defs/def_b3ba4638"
@@ -13533,7 +13509,7 @@
         "$ref": "#/_defs/def_772a006c"
       },
       "n": "Final Listing Assembly / Publish Prep",
-      "module": "listing_assembler",
+        "module": "listing_assembler",
       "o": {
         "$ref": "#/_defs/def_3be44f22"
       },
@@ -13589,7 +13565,7 @@
         "$ref": "#/_defs/def_cb1aaeac"
       },
       "n": "Export CSV/Excel",
-      "module": "exporter",
+        "module": "exporter",
       "output_policy": {
         "$ref": "#/_defs/def_f429d8c0"
       },
@@ -20537,7 +20513,6 @@
       "6a",
       "6b",
       "7",
-      "7a",
       "8",
       "8a",
       "8B",
@@ -20550,12 +20525,12 @@
       "13",
       "14",
       "15",
-      "seo_package",
       "16",
       "17",
       "18",
       "19",
-      "20"
+      "20",
+      "seo_package"
     ]
   },
   "_ui_policy": {
@@ -31758,10 +31733,6 @@
         "en": true
       },
       {
-        "id": "7a",
-        "en": true
-      },
-      {
         "id": "8",
         "en": true
       },
@@ -31810,10 +31781,6 @@
         "en": true
       },
       {
-        "id": "seo_package",
-        "en": true
-      },
-      {
         "id": "16",
         "en": true
       },
@@ -31831,6 +31798,10 @@
       },
       {
         "id": "20",
+        "en": true
+      },
+      {
+        "id": "seo_package",
         "en": true
       }
     ]
