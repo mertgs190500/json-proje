@@ -1,8 +1,7 @@
-Here is the code:
-
 import logging
 import re
 from collections import Counter
+from version_control import VersionControl
 
 class TagGenerator:
     """
@@ -42,7 +41,7 @@ class TagGenerator:
         # Sort the stemmed words to make the root order-independent
         return ' '.join(sorted(stemmed_words))
 
-    def execute(self, inputs, context, db_manager=None):
+    def execute(self, inputs, context, knowledge_manager=None):
         """
         Main execution method called by the orchestrator.
 
@@ -156,5 +155,23 @@ class TagGenerator:
                     final_tags.append(tag)
                     used_root_words.add(root)
 
-        logging.info(f"[TagGenerator] Successfully generated {len(final_tags)} final tags.")
-        return {"final_tags": final_tags[:self.FINAL_TAG_COUNT]}
+        final_tags_list = final_tags[:self.FINAL_TAG_COUNT]
+        logging.info(f"[TagGenerator] Successfully generated {len(final_tags_list)} final tags.")
+
+        output_data = {"final_tags": final_tags_list}
+
+        # Save the output using VersionControl
+        if isinstance(knowledge_manager, VersionControl):
+            try:
+                knowledge_manager.save_with_metadata(
+                    base_path='outputs/generated_tags.json',
+                    data=output_data,
+                    actor='tag_generator.py',
+                    reason='Generated 13 SEO tags based on analysis.'
+                )
+                logging.info("[TagGenerator] Successfully saved tags with metadata.")
+            except Exception as e:
+                # Log the error but don't crash the workflow
+                logging.error(f"[TagGenerator] Failed to save tags using version control: {e}", exc_info=True)
+
+        return output_data
