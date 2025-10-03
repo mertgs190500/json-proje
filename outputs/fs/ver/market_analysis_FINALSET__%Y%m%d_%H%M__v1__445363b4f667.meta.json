@@ -1,8 +1,0 @@
-{
-  "timestamp": "2025-10-03T18:22:49.436144+00:00",
-  "version": 1,
-  "sha256": "445363b4f667ab873714e0457df6bb2dba0d5d510ed6160f6cbbb2052ae23ded",
-  "actor": "market_analyzer.py",
-  "reason": "Completed market analysis from processed CSV data.",
-  "source_file": "outputs/fs/ver/market_analysis_FINALSET__%Y%m%d_%H%M__v1__445363b4f667.json"
-}
