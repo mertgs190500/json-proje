@@ -22,7 +22,7 @@ class DescriptionGenerator:
                 # Load validation rules from the specific step definition
                 self.rules['validation_rules'] = config.get('s', {}).get('11', {}).get('c', {})
                 logging.info(f"Loaded validation rules: {self.rules['validation_rules']}")
-
+                
                 # Load brand voice profile
                 self.rules['brand_voice'] = config.get('shop_profile', {}).get('brand_voice', {})
                 logging.info(f"Loaded brand voice: {self.rules['brand_voice']}")
@@ -74,12 +74,12 @@ class DescriptionGenerator:
         by calling specialized helper methods.
         """
         logging.info("Generating description sections...")
-
+        
         hook = self._create_hook(final_title, market_data.get('focus_keywords', []))
         features = self._create_features_list(product_data)
         story = self._create_story_section()
         logistics = self._create_logistics_section()
-
+        
         return {
             "hook": hook,
             "features": features,
@@ -91,17 +91,17 @@ class DescriptionGenerator:
         """Creates the introductory hook, ensuring the focus keyword is in the first sentence."""
         brand_keywords = self.rules.get('brand_voice', {}).get('keywords', ['quality', 'timeless', 'elegant'])
         focus_keyword = focus_keywords[0] if focus_keywords else "unique jewelry"
-
+        
         # Construct the hook to include the focus keyword in the first sentence.
         hook_text = f"Experience timeless elegance with our {focus_keyword}, the {final_title}. "
         hook_text += f"This exquisite piece is handcrafted to be a cherished treasure, perfect for those who appreciate {brand_keywords[0]} design."
-
+        
         return hook_text[:160] # Adhere to the 160 character hook limit
 
     def _create_features_list(self, product_data):
         """Creates a bulleted list of product specifications."""
         features = []
-
+        
         # Using .get() for safe key access from product_data
         if product_data.get('materials'):
             features.append(f"Material: {', '.join(product_data['materials'])}")
@@ -119,7 +119,7 @@ class DescriptionGenerator:
         brand_voice = self.rules.get('brand_voice', {})
         tone = brand_voice.get('tone', 'elegant and professional')
         keywords = brand_voice.get('keywords', ['quality', 'timeless'])
-
+        
         story = f"Our commitment to {keywords[1]} craftsmanship ensures every piece is a work of art. "
         story += f"We believe in creating {keywords[2]}, {tone.split(',')[0]} jewelry that you'll cherish for a lifetime."
         return story
@@ -128,14 +128,14 @@ class DescriptionGenerator:
         """Creates the logistics, shipping, and returns section from rules."""
         guide = self.rules.get('structure_guide', {})
         must_includes = guide.get('must_include_from_product_info', [])
-
+        
         # The 'must_include_from_product_info' from finalv1.json is a list of ready-made strings.
         # We can directly use them.
         logistics_text = "\n".join(must_includes)
-
+        
         # Add return policy from shop_profile
         logistics_text += "\n" + self.rules.get('logistics_info', {}).get('returns', {}).get('window_text', '15-day returns') + " return policy."
-
+        
         return "Shipping & Policies:\n" + logistics_text
 
     def _assemble_description(self, parts):
@@ -143,7 +143,7 @@ class DescriptionGenerator:
         Assembles the generated sections into a single formatted string.
         """
         logging.info("Assembling final description...")
-
+        
         # Join sections with double newlines for clear separation
         full_description = (
             f"{parts['hook']}\n\n"
@@ -177,7 +177,7 @@ class DescriptionGenerator:
         keyword_pass = focus_keyword.lower() in first_sentence.lower() if focus_keyword else False
         report['checks'].append({"name": "Focus Keyword Check", "status": "PASS" if keyword_pass else "FAIL", "details": f"Focus keyword '{focus_keyword}' in first sentence."})
         if not keyword_pass: report['overall_status'] = "FAIL"
-
+        
         # 3. Logistics Information Check
         guide = self.rules.get('structure_guide', {})
         must_includes = guide.get('must_include_from_product_info', [])
