@@ -3109,7 +3109,43 @@
               },
               "n": "Market Aggregation & Ads Prep",
               "o": {
-                "context_key": "market_analysis_output"
+                "context_key": "market_analysis_output",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ads_seed_positive": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "keyword": {
+                            "type": "string"
+                          },
+                          "match_type_suggestion": {
+                            "type": "string",
+                            "enum": [
+                              "Exact",
+                              "Phrase"
+                            ]
+                          },
+                          "bid_strategy_suggestion": {
+                            "type": "string",
+                            "enum": [
+                              "Low",
+                              "Medium",
+                              "High"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "keyword",
+                          "match_type_suggestion",
+                          "bid_strategy_suggestion"
+                        ]
+                      }
+                    }
+                  }
+                }
               },
               "precon": {
                 "$ref": "#/_defs/def_f5ad00a4"

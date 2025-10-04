@@ -87,23 +87,70 @@ class MarketAnalyzer:
             "competitor_signals": competitor_signals
         }
 
+    def _generate_ad_strategy(self, row):
+        """Generates advertising strategy suggestions for a keyword."""
+        # Match Type Suggestion Logic
+        if row.get('Long-tail keyword', 'No') == 'Yes':
+            match_type = 'Exact'
+        else:
+            match_type = 'Phrase'
+
+        # Bid Strategy Suggestion Logic
+        competition_norm = row.get('competition_norm', 0.5)
+        search_volume_norm = row.get('search_volume_norm', 0.5)
+
+        bid_score = (1 - competition_norm) * 0.6 + search_volume_norm * 0.4
+
+        if bid_score > 0.65:
+            bid_strategy = 'High'
+        elif bid_score > 0.35:
+            bid_strategy = 'Medium'
+        else:
+            bid_strategy = 'Low'
+
+        return {
+            "match_type_suggestion": match_type,
+            "bid_strategy_suggestion": bid_strategy
+        }
+
     def aggregate_market_insights(self, popular_analysis, competitor_analysis, df_similar_keywords, product_info):
         """
-        Aggregates all insights to find keyword gaps and create ad seeds.
+        Aggregates all insights to find keyword gaps and create ad seeds with strategy suggestions.
         """
         logging.info("Aggregating market insights...")
+
+        # Prepare data from df_similar_keywords
+        if 'Keyword' not in df_similar_keywords.columns:
+            logging.error("'Keyword' column not found in similar keywords data. Cannot proceed.")
+            return {}
+
+        df_similar_keywords['Search volume'] = pd.to_numeric(df_similar_keywords['Search volume'], errors='coerce').fillna(0)
+        df_similar_keywords['Competition'] = pd.to_numeric(df_similar_keywords['Competition'], errors='coerce').fillna(0)
+        df_similar_keywords['search_volume_norm'] = self._normalize_column(df_similar_keywords, 'Search volume')
+        df_similar_keywords['competition_norm'] = self._normalize_column(df_similar_keywords, 'Competition')
+
+        similar_kws_df = df_similar_keywords.set_index('Keyword')
+
         popular_kws = set(popular_analysis.get('popular_keywords_top', []))
         competitor_kws = set(competitor_analysis.get('competitor_signals', {}).get('main_themes', []))
-
-        if 'Keyword' not in df_similar_keywords.columns:
-            logging.error("'Keyword' column not found in similar keywords data. Cannot find gaps.")
-            demand_kws = set()
-        else:
-            demand_kws = set(self._extract_keywords(df_similar_keywords['Keyword'], top_n=100))
+        demand_kws = set(self._extract_keywords(df_similar_keywords['Keyword'], top_n=100))
 
         supply_kws = popular_kws.union(competitor_kws)
         keyword_gaps = list(demand_kws - supply_kws)
-        ads_seed_positive = list(dict.fromkeys(list(demand_kws.intersection(popular_kws)) + keyword_gaps))
+
+        # Combine seeds and create strategy suggestions
+        positive_seed_keywords = list(dict.fromkeys(list(demand_kws.intersection(popular_kws)) + keyword_gaps))
+
+        ads_seed_positive = []
+        for keyword in positive_seed_keywords:
+            if keyword in similar_kws_df.index:
+                row = similar_kws_df.loc[keyword]
+                strategy = self._generate_ad_strategy(row)
+                ads_seed_positive.append({
+                    "keyword": keyword,
+                    **strategy
+                })
+
         ads_seed_negative = list(competitor_kws - popular_kws - demand_kws)
 
         # Task 2.2: Identify potential negative keywords from demand data based on product attributes.
@@ -112,7 +159,7 @@ class MarketAnalyzer:
         if "solid gold" in product_material:
             negative_patterns = ["plated", "filled", "vermeil", "kaplama"]
             logging.info(f"Product is 'solid gold'. Identifying candidates from demand keywords with patterns: {negative_patterns}")
-            for keyword in demand_kws: # Search demand keywords for irrelevant patterns
+            for keyword in demand_kws:
                 for pattern in negative_patterns:
                     if pattern in keyword.lower():
                         proactive_negative_candidates.add(keyword)
