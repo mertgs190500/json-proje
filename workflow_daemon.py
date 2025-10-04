@@ -62,30 +62,45 @@ def run_command(command):
 
 # --- Core Functions ---
 def check_for_updates(status_log):
-    """Checks for remote updates and pulls them if the local branch is behind."""
+    """
+    Checks for remote updates, pulls if behind, and halts if diverged.
+    """
     logging.info("--- Checking for repository updates ---")
     status_log.append({"event": "update_check_started", "timestamp": datetime.now(timezone.utc).isoformat()})
 
-    _, error = run_command(["git", "fetch", "origin"])
-    if error:
-        status_log.append({"event": "git_fetch_failed", "error": error, "timestamp": datetime.now(timezone.utc).isoformat()})
-        return
+    # 1. Fetch the latest info from the remote
+    run_command(["git", "fetch", "origin"])
 
+    # 2. Check the status
     status_output, error = run_command(["git", "status", "-uno"])
     if error:
         status_log.append({"event": "git_status_failed", "error": error, "timestamp": datetime.now(timezone.utc).isoformat()})
         return
 
-    if f"Your branch is behind 'origin/{GIT_BRANCH}'" in status_output:
-        logging.info("Local branch is behind. Pulling changes...")
-        _, error = run_command(["git", "pull", "origin", GIT_BRANCH])
-        if error:
-            status_log.append({"event": "git_pull_failed", "error": error, "timestamp": datetime.now(timezone.utc).isoformat()})
-        else:
-            status_log.append({"event": "git_pull_success", "timestamp": datetime.now(timezone.utc).isoformat()})
-    else:
+    # 3. Handle different Git states
+    if "Your branch is up to date" in status_output:
         logging.info("Project is up-to-date.")
         status_log.append({"event": "repo_up_to_date", "timestamp": datetime.now(timezone.utc).isoformat()})
+
+    elif "Your branch is behind" in status_output:
+        logging.info("Local branch is behind. Pulling changes...")
+        pull_output, pull_error = run_command(["git", "pull", "origin", "main"])
+        if pull_error:
+            logging.error(f"Failed to pull changes: {pull_error}")
+            status_log.append({"event": "git_pull_failed", "error": pull_error, "timestamp": datetime.now(timezone.utc).isoformat()})
+        else:
+            logging.info("Project updated successfully.")
+            status_log.append({"event": "git_pull_success", "timestamp": datetime.now(timezone.utc).isoformat()})
+
+    elif "have diverged" in status_output:
+        logging.critical("CRITICAL - Branch has diverged! Manual intervention required. Stopping update cycle.")
+        status_log.append({"event": "branch_diverged", "error": "Branch has diverged", "timestamp": datetime.now(timezone.utc).isoformat()})
+        # Stop further processing by returning immediately
+        return
+
+    else:
+        logging.warning(f"Unknown git status. Full output:\n{status_output}")
+        status_log.append({"event": "unknown_git_status", "details": status_output, "timestamp": datetime.now(timezone.utc).isoformat()})
 
 def check_for_production_output(status_log):
     """Checks for completed production outputs and pushes them to the repository."""
