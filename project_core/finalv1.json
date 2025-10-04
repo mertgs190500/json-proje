@@ -3109,13 +3109,13 @@
               },
               "n": "Market Aggregation & Ads Prep",
               "o": {
-                "$ref": "#/_defs/def_ad05ba5c"
+                "context_key": "market_analysis_output"
               },
               "precon": {
                 "$ref": "#/_defs/def_f5ad00a4"
               },
               "requires": [
-                "5b"
+                "6b"
               ],
               "rls": {
                 "$ref": "#/_defs/def_9666a082"
@@ -11102,22 +11102,30 @@
         "req_ctx": true
       },
       "8c_negative": {
-        "n": "Ads Sync – Negative Set",
+        "n": "Negative Keyword Automation",
+        "module": "keyword_processor.py",
         "en": true,
-        "purp": "Sync negative keywords for Ads campaign.",
-        "requires": [
-          "8b_positive"
-        ],
-        "i": [
-          "ads.negatives[]"
-        ],
-        "o": [
-          "ads_sync.final_negative[]",
-          "ads_sync.status"
-        ],
-        "rs": {
-          "note": "Placeholder: Define sync logic."
+        "purp": "Automate the generation of the final negative keyword list.",
+        "i": {
+          "ads_seed_negative": {
+            "$ref": "context.market_analysis_output.ads_seed_negative"
+          },
+          "proactive_negative_candidates": {
+            "$ref": "context.market_analysis_output.proactive_negative_candidates"
+          },
+          "product_info": {
+            "$ref": "context.product_record"
+          }
         },
+        "o": {
+          "context_key": "final_negatives"
+        },
+        "requires": [
+          "7"
+        ],
+        "rs": [
+          "This step now calls the 'generate_negative_keywords' method in keyword_processor."
+        ],
         "auto_c": true,
         "await_u": false,
         "req_ctx": true
@@ -18118,24 +18126,7 @@
           "user_tasks": []
         },
         "i": {
-          "market_analysis": {
-            "$ref": "context.market_analysis"
-          },
-          "keyword_data": {
-            "$ref": "context.keyword_data"
-          },
-          "title_data": {
-            "$ref": "context.title_data"
-          },
-          "description_data": {
-            "$ref": "context.description_data"
-          },
-          "product_attributes": {
-            "$ref": "context.product_attributes"
-          },
-          "competitor_tags_data": {
-            "$ref": "context.competitor_data_clean"
-          }
+          "$ref": "#/_defs/def_3e23fa2e"
         },
         "inputs_contract": {
           "$ref": "#/_defs/def_c8ca5491"
@@ -19431,9 +19422,6 @@
         "c": {
           "require_csv": true,
           "empty_intake": "RUN FAIL"
-        },
-        "o": {
-          "context_key": "competitor_data_clean"
         },
         "await_u": true,
         "require_user_confirm": true,

@@ -59,30 +59,64 @@ class KeywordProcessor:
 
         return [kw[0] for kw in scored_keywords]
 
+    def generate_negative_keywords(self, inputs, context):
+        """
+        Generates a final list of negative keywords by combining research candidates
+        with logical inferences based on product attributes.
+        """
+        logging.info("[KeywordProcessor] Generating final negative keyword list.")
+
+        market_negatives = set(inputs.get('ads_seed_negative', []))
+        proactive_candidates = set(inputs.get('proactive_negative_candidates', []))
+        product_info = inputs.get('product_info', {})
+
+        inferred_negatives = set()
+
+        # Centralized logical inference based on material
+        material = product_info.get('material', '').lower() if isinstance(product_info.get('material'), str) else ""
+        karats = product_info.get('karats', [])
+
+        if 'solid gold' in material or '14k' in karats or '18k' in karats:
+            inferred_negatives.update(['gold plated', 'plated', 'gold filled', 'filled', 'vermeil', 'kaplama'])
+            logging.info("Product is solid gold. Inferred negatives: 'plated', 'filled', 'vermeil', 'kaplama'.")
+
+        if 'sterling silver' in material:
+            inferred_negatives.update(['silver plated'])
+
+        # Combine all sources and deduplicate
+        final_negatives = list(market_negatives.union(proactive_candidates).union(inferred_negatives))
+        logging.info(f"Final negative keyword list generated with {len(final_negatives)} terms.")
+
+        return {"final_negative_keywords": final_negatives}
+
     def execute(self, inputs, context, db_manager=None):
         """
-        Consolidated keyword preparation process with visual and performance intelligence.
+        Main execution entry point. Dispatches to the correct method based on inputs.
         """
-        logging.info("[KeywordProcessor] Intelligent preparation initiated.")
+        # Check if this execution is for negative keyword generation (Task 2.2)
+        if 'ads_seed_negative' in inputs or 'proactive_negative_candidates' in inputs:
+            logging.info("[KeywordProcessor] Dispatching to negative keyword generation.")
+            return self.generate_negative_keywords(inputs, context)
 
+        # Fallback to the original keyword scoring workflow
+        logging.info("[KeywordProcessor] Dispatching to standard keyword preparation.")
         seed = inputs.get("seed")
+        if not seed:
+            raise ValueError("Input 'seed' is required for the standard keyword processing workflow.")
+
         market_tags = inputs.get("market_tags", [])
         visual_tags = inputs.get("visual_tags", [])
-        external_metrics = inputs.get("external_metrics", {}) # NEW: Get external metrics
+        external_metrics = inputs.get("external_metrics", {})
 
-        # Internal data flow
         collected = self._collect(seed)
         filtered = self._filter(collected)
         merged = self._merge(filtered, market_tags, visual_tags)
-
-        # Scoring and selection using the advanced Fusion Model
         selected = self._score_and_select(merged, db_manager, external_metrics)
 
-        # The output must conform to the StrategicKeywordData contract
         output = {
             "coreKeywords": selected[:5],
             "longTailKeywords": selected[5:],
             "metrics": {"totalSearchVolume": len(selected) * 100, "competitorDensity": 0.6}
         }
-        logging.info("[KeywordProcessor] Preparation complete.")
+        logging.info("[KeywordProcessor] Standard keyword preparation complete.")
         return output

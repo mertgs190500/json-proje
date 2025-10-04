@@ -87,22 +87,36 @@ class MarketAnalyzer:
             "competitor_signals": competitor_signals
         }
 
-    def aggregate_market_insights(self, popular_analysis, competitor_analysis, df_similar_keywords):
+    def aggregate_market_insights(self, popular_analysis, competitor_analysis, df_similar_keywords, product_info):
         """
         Aggregates all insights to find keyword gaps and create ad seeds.
         """
         logging.info("Aggregating market insights...")
         popular_kws = set(popular_analysis.get('popular_keywords_top', []))
         competitor_kws = set(competitor_analysis.get('competitor_signals', {}).get('main_themes', []))
+
         if 'Keyword' not in df_similar_keywords.columns:
             logging.error("'Keyword' column not found in similar keywords data. Cannot find gaps.")
             demand_kws = set()
         else:
             demand_kws = set(self._extract_keywords(df_similar_keywords['Keyword'], top_n=100))
+
         supply_kws = popular_kws.union(competitor_kws)
         keyword_gaps = list(demand_kws - supply_kws)
         ads_seed_positive = list(dict.fromkeys(list(demand_kws.intersection(popular_kws)) + keyword_gaps))
         ads_seed_negative = list(competitor_kws - popular_kws - demand_kws)
+
+        # Task 2.2: Identify potential negative keywords from demand data based on product attributes.
+        proactive_negative_candidates = set()
+        product_material = product_info.get("material", "").lower() if isinstance(product_info.get("material"), str) else ""
+        if "solid gold" in product_material:
+            negative_patterns = ["plated", "filled", "vermeil", "kaplama"]
+            logging.info(f"Product is 'solid gold'. Identifying candidates from demand keywords with patterns: {negative_patterns}")
+            for keyword in demand_kws: # Search demand keywords for irrelevant patterns
+                for pattern in negative_patterns:
+                    if pattern in keyword.lower():
+                        proactive_negative_candidates.add(keyword)
+
         market_snapshot = {
             "keyword_gaps": keyword_gaps[:20],
             "market_demand_keywords": list(demand_kws)[:50],
@@ -112,7 +126,8 @@ class MarketAnalyzer:
         return {
             "market_snapshot": market_snapshot,
             "ads_seed_positive": ads_seed_positive,
-            "ads_seed_negative": ads_seed_negative
+            "ads_seed_negative": ads_seed_negative,
+            "proactive_negative_candidates": list(proactive_negative_candidates)
         }
 
     def execute(self, inputs, context, db_manager=None):
@@ -123,6 +138,8 @@ class MarketAnalyzer:
         popular_data = inputs.get("popular_listings_data")
         competitor_data = inputs.get("competitor_listings_data")
         similar_data = inputs.get("similar_keywords_data")
+        product_info = inputs.get("product_info", {}) # Get product info from resolved inputs
+
         if popular_data is None or competitor_data is None or similar_data is None:
             raise ValueError("Missing one or more required datasets (popular, competitor, or similar).")
         try:
@@ -134,7 +151,7 @@ class MarketAnalyzer:
             raise
         popular_analysis = self.analyze_popular_listings(df_popular.copy())
         competitor_analysis = self.analyze_competitor_listings(df_competitors.copy())
-        market_insights = self.aggregate_market_insights(popular_analysis, competitor_analysis, df_similar.copy())
+        market_insights = self.aggregate_market_insights(popular_analysis, competitor_analysis, df_similar.copy(), product_info)
         final_output = {**popular_analysis, **competitor_analysis, **market_insights}
         logging.info("[MarketAnalyzer] Market analysis finished successfully.")
         return final_output
