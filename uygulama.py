@@ -6,12 +6,37 @@ import operator
 import importlib.util
 import os
 import glob
+import sys
 from session_manager import SessionManager
 from knowledge_manager import KnowledgeManager
 from version_control import VersionControl
+from config_validator import ConfigValidator
+from system_health_checker import SystemHealthChecker
 
 # --- CONFIGURATION ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# --- STARTUP CHECKS ---
+def perform_startup_checks():
+    """Runs all pre-flight checks to ensure the system is in a valid state."""
+    logging.info("--- Performing System Startup Checks ---")
+
+    # 1. System Health Check
+    health_checker = SystemHealthChecker()
+    health_result = health_checker.execute()
+    if health_result["status"] == "FAIL":
+        logging.critical("System health check failed. Aborting startup.")
+        return False
+
+    # 2. Configuration Validation
+    config_validator = ConfigValidator()
+    config_result = config_validator.execute()
+    if config_result["status"] == "FAIL":
+        logging.critical("Configuration validation failed. Aborting startup.")
+        return False
+
+    logging.info("--- System Startup Checks Passed ---")
+    return True
 
 # --- UTILITY FUNCTIONS ---
 def load_json(filename):
@@ -213,6 +238,10 @@ class WorkflowOrchestrator:
             logging.info("Orkestratör durumu 'IDLE' olarak ayarlandı.")
 
 if __name__ == "__main__":
+    # --- RUN STARTUP CHECKS FIRST ---
+    if not perform_startup_checks():
+        sys.exit(1)
+
     logging.info("CSV INGESTION PROCESS (CSV-INGEST-PROCESS-01) BAŞLATILIYOR...")
     file_profile_map = {
         "Similar_keywords*.csv": "similar_keywords_v2",
