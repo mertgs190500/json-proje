@@ -85,22 +85,15 @@ class ProfileManager:
             return {**base_profile, **profile}
         return profile
 
-# DBManager class is now obsolete and has been replaced by KnowledgeManager.
-
 class WorkflowOrchestrator:
     """Orchestrates the entire workflow based on a configuration file or dictionary."""
     def __init__(self):
         self.policy = load_json("orchestrator_policy.json") or {}
         logging.getLogger().setLevel(self.policy.get("logging", {}).get("level", "INFO").upper())
-
-        # Load main config for VersionControl dependency
         main_config = load_json("project_core/finalv1.json")
         if not main_config or "fs" not in main_config or "ver" not in main_config["fs"]:
             raise ValueError("Orchestrator cannot start: 'fs.ver' configuration not found in project_core/finalv1.json")
-
-        # Centralized VersionControl instance
         self.version_controller = VersionControl(main_config["fs"]["ver"])
-
         self.session = SessionManager(self.policy.get("session"))
         self.workflow_schema = load_json("workflow_schema_v2.json")
         self.contracts = (load_json("data_contracts.json") or {}).get("contracts", {})
@@ -108,16 +101,10 @@ class WorkflowOrchestrator:
         self.state = "IDLE"
         self.rule_engine = RuleEngine()
         self.profile_manager = ProfileManager()
-
-        # Inject VersionControl into KnowledgeManager
         self.knowledge_manager = KnowledgeManager(version_controller=self.version_controller)
         logging.info("Orkestratör başlatıldı.")
 
     def _unpack_inputs(self, data):
-        """
-        Recursively traverses resolved inputs and replaces versioned file dictionaries
-        (e.g., {'filepath': '...', 'sha256': '...'}) with just the filepath string.
-        """
         if isinstance(data, dict):
             if 'filepath' in data and 'sha256' in data:
                 logging.info(f"Unpacking file path for next step: {data['filepath']}")
@@ -165,11 +152,9 @@ class WorkflowOrchestrator:
         return inputs
 
     def run(self, config):
-        """Loads and executes the workflow from a configuration file path or a dictionary."""
         if self.state == "WORKING":
             logging.error("Orkestratör zaten çalışıyor. Yeni görev reddedildi.")
             return
-
         self.state = "WORKING"
         try:
             if isinstance(config, str):
@@ -179,67 +164,48 @@ class WorkflowOrchestrator:
             else:
                 logging.error("Geçersiz yapılandırma. Dosya yolu (str) veya sözlük (dict) olmalıdır.")
                 return
-
             if not config_data:
                 logging.error("İş akışı yapılandırması yüklenemedi.")
                 return
             if self.workflow_schema and not validate_against_schema(config_data, self.workflow_schema, "Workflow Schema V2"):
                  logging.error("İş akışı şema doğrulaması başarısız oldu.")
                  return
-
             logging.info(f"İş akışı başlatılıyor: {config_data.get('workflow_id', 'N/A')}")
             for step in config_data.get("steps", []):
                 step_id = step.get('id', 'N/A')
                 logging.info(f"--- Adım: {step_id} ---")
-
                 status, msg = self.session.check_status()
                 if status != "STATUS_OK":
                     logging.error(f"İş akışı durduruldu (Session: {status}): {msg}")
                     break
-
                 ruleset_name = step.get("rs", {}).get("ruleset_name")
                 if ruleset_name and not self.rule_engine.evaluate(ruleset_name, self.context):
                     logging.info(f"Adım {step_id} atlandı (Kural '{ruleset_name}' geçmedi).")
                     continue
-
                 module_instance = self.load_module(step["module"])
                 if not module_instance:
-                    if self.policy.get("execution", {}).get("stop_on_error", True):
-                        break
-                    else:
-                        continue
-
+                    if self.policy.get("execution", {}).get("stop_on_error", True): break
+                    else: continue
                 resolved_inputs = self.resolve_inputs(step.get("i", {}), self.context)
-
-                # NEW: Unpack inputs to extract filepaths from versioned outputs of previous steps
                 unpacked_inputs = self._unpack_inputs(resolved_inputs)
-
                 try:
                     if step_id == '7a' and hasattr(module_instance, 'execute_step_7a'):
                         logging.info(f"Executing dedicated method for step {step_id}.")
-                        # Pass the orchestrator's version_controller instance
                         output = module_instance.execute_step_7a(unpacked_inputs, self.context, self.version_controller)
                     else:
                         output = module_instance.execute(unpacked_inputs, self.context, self.knowledge_manager)
                 except Exception as e:
                     logging.error(f"Adım {step_id} yürütülürken hata: {e}", exc_info=True)
-                    if self.policy.get("execution", {}).get("stop_on_error", True):
-                        break
-                    else:
-                        continue
-
+                    if self.policy.get("execution", {}).get("stop_on_error", True): break
+                    else: continue
                 contract_name = step.get("o", {}).get("contract")
                 if contract_name and not self.validate_data_contract(contract_name, output):
-                    if self.policy.get("execution", {}).get("stop_on_contract_violation", True):
-                        break
-                    else:
-                        continue
-
+                    if self.policy.get("execution", {}).get("stop_on_contract_violation", True): break
+                    else: continue
                 context_key = step.get("o", {}).get("context_key")
                 if context_key:
                     self.context[context_key] = output
                     logging.info(f"'{context_key}' anahtarı context'e eklendi.")
-
                 self.session.log_update()
                 logging.info(f"Adım {step_id} tamamlandı.")
         finally:
@@ -248,48 +214,35 @@ class WorkflowOrchestrator:
 
 if __name__ == "__main__":
     logging.info("CSV INGESTION PROCESS (CSV-INGEST-PROCESS-01) BAŞLATILIYOR...")
-
     file_profile_map = {
         "Similar_keywords*.csv": "similar_keywords_v2",
         "Top_listings*.csv": "top_listings_title_first_v1",
         "Listings*.csv": "listings_title_first_v1"
     }
-
     files_to_process = [f for pattern in file_profile_map for f in glob.glob(f"./{pattern}")]
-
     if not files_to_process:
         logging.warning("Kök dizinde işlenecek CSV dosyası bulunamadı. (Örn: Similar_keywords*.csv)")
     else:
         logging.info(f"İşlenecek dosyalar bulundu: {files_to_process}")
         orchestrator = WorkflowOrchestrator()
-
         for file_path in files_to_process:
             profile_name = next((p for pattern, p in file_profile_map.items() if glob.fnmatch.fnmatch(os.path.basename(file_path), pattern)), None)
             if not profile_name:
                 logging.warning(f"'{file_path}' için uygun profil bulunamadı. Atlanıyor.")
                 continue
-
             logging.info(f"\n>>> '{os.path.basename(file_path)}' için iş akışı başlatılıyor (Profil: {profile_name}) <<<")
-
             dynamic_workflow = {
                 "workflow_id": f"ingest_{os.path.basename(file_path)}",
                 "steps": [
                     {
                         "id": f"load_{os.path.basename(file_path)}",
-                        "name": f"Load CSV: {os.path.basename(file_path)}",
                         "module": "data_loader.py",
                         "i": {"file_path": file_path},
                         "o": {"context_key": "current_csv_data"},
                         "rs": {"ruleset_name": "AlwaysRun"},
-                        "meta": {
-                            "description": "Loads the raw content of a CSV file for processing.",
-                            "author": "Jules",
-                            "last_updated": "2025-10-02T12:00:00Z"
-                        }
                     },
                     {
                         "id": f"ingest_{os.path.basename(file_path)}",
-                        "name": f"Ingest CSV: {os.path.basename(file_path)}",
                         "module": "csv_ingestor.py",
                         "i": {
                             "raw_content": {"$ref": "context.current_csv_data.raw_content"},
@@ -298,16 +251,10 @@ if __name__ == "__main__":
                         },
                         "o": {"context_key": f"processed_{os.path.basename(file_path)}"},
                         "rs": {"ruleset_name": "AlwaysRun"},
-                        "meta": {
-                            "description": "Parses, cleans, and validates CSV data using a profile.",
-                            "author": "Jules",
-                            "last_updated": "2025-10-02T12:00:00Z"
-                        }
                     }
                 ]
             }
             orchestrator.run(dynamic_workflow)
-
         logging.info("\n--- TÜM CSV İŞLEME AKIŞLARI TAMAMLANDI ---")
         print("\n--- Final Context Özeti: ---")
         final_context_summary = {}

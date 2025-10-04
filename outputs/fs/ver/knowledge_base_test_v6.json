@@ -1,0 +1,33 @@
+{
+  "actor": "knowledge_manager.py",
+  "learned_insights": [
+    {
+      "confidence": 0.9,
+      "key": "key1",
+      "source_id": "source_A",
+      "timestamp": "2025-10-04T06:26:10.737146Z",
+      "value": "val1"
+    },
+    {
+      "confidence": 0.9,
+      "key": "key2",
+      "source_id": "source_B",
+      "timestamp": "2025-10-04T06:26:10.737669Z",
+      "value": "val2"
+    },
+    {
+      "confidence": 0.9,
+      "key": "key3",
+      "source_id": "source_A",
+      "timestamp": "2025-10-04T06:26:10.738100Z",
+      "value": "val3"
+    }
+  ],
+  "performance_metrics": [],
+  "reason": "Add new insight: 'test_key' from 'test_source'",
+  "session_state": {},
+  "sha256": "49bebb1e9a4998ab7bc7434dbef4b8900fcb614062aaf4d53979e51ea7434676",
+  "source_file": "outputs/fs/ver/knowledge_base_test_v2.json",
+  "timestamp": "2025-10-04T06:26:10.735832+00:00",
+  "version": 2
+}

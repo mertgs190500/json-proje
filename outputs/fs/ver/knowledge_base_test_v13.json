@@ -1,0 +1,19 @@
+{
+  "actor": "knowledge_manager.py",
+  "learned_insights": [
+    {
+      "confidence": 0.9,
+      "key": "key1",
+      "source_id": "source_A",
+      "timestamp": "2025-10-04T06:27:36.369554Z",
+      "value": "val1"
+    }
+  ],
+  "performance_metrics": [],
+  "reason": "Add new insight: 'test_key' from 'test_source'",
+  "session_state": {},
+  "sha256": "5ae99a719effe029fd419ac5cab397370d2051a58109db735c207a695323efba",
+  "source_file": "outputs/fs/ver/knowledge_base_test_v11.json",
+  "timestamp": "2025-10-04T06:27:36.368083+00:00",
+  "version": 11
+}

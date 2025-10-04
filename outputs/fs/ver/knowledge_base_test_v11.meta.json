@@ -1,0 +1,8 @@
+{
+  "timestamp": "2025-10-04T06:27:36.368083+00:00",
+  "version": 11,
+  "sha256": "5ae99a719effe029fd419ac5cab397370d2051a58109db735c207a695323efba",
+  "actor": "knowledge_manager.py",
+  "reason": "Add new insight: 'test_key' from 'test_source'",
+  "source_file": "outputs/fs/ver/knowledge_base_test_v11.json"
+}
