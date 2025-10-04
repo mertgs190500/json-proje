@@ -215,7 +215,12 @@ class WorkflowOrchestrator:
                 unpacked_inputs = self._unpack_inputs(resolved_inputs)
 
                 try:
-                    output = module_instance.execute(unpacked_inputs, self.context, self.knowledge_manager)
+                    if step_id == '7a' and hasattr(module_instance, 'execute_step_7a'):
+                        logging.info(f"Executing dedicated method for step {step_id}.")
+                        # Pass the orchestrator's version_controller instance
+                        output = module_instance.execute_step_7a(unpacked_inputs, self.context, self.version_controller)
+                    else:
+                        output = module_instance.execute(unpacked_inputs, self.context, self.knowledge_manager)
                 except Exception as e:
                     logging.error(f"Adım {step_id} yürütülürken hata: {e}", exc_info=True)
                     if self.policy.get("execution", {}).get("stop_on_error", True):

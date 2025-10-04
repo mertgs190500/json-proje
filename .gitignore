@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment
+.env
+.venv
+env/
+venv/
+
+# Build and test artifacts
+outputs/
+/ver_test/
+
+# Logs
+*.log
+daemon.log
+
+# Test artifacts
+test_knowledge_base.json
+test_knowledge_base.json.meta.json
+outputs_test/

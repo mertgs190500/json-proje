@@ -228,3 +228,93 @@ class MarketAnalyzer:
             # For now, we will still return the output to not break the chain.
 
         return final_output
+
+    def execute_step_7a(self, inputs, context, version_controller):
+        """
+        Executes Step 7a: Market and Price Forecast analysis.
+        Analyzes competitor prices and product info to recommend pricing tiers.
+        """
+        logging.info("[MarketAnalyzer] Starting Step 7a: Market and Price Forecast.")
+
+        product_info = context.get("product_info", {})
+
+        # The full output of step 7 is passed as input to 7a
+        competitor_signals = inputs.get("competitor_signals", {})
+        pricing_data = competitor_signals.get("pricing", {})
+
+        competitor_price_avg = pricing_data.get("avg_price", 0)
+        competitor_price_median = pricing_data.get("median_price", 0)
+
+        analysis_summary = {
+            "competitor_price_avg": round(competitor_price_avg, 2) if competitor_price_avg else 0,
+            "competitor_price_median": round(competitor_price_median, 2) if competitor_price_median else 0
+        }
+
+        our_prices = product_info.get("variation_prices", {})
+        recommended_tiers = {}
+
+        for variation, price_str in our_prices.items():
+            try:
+                price_value = float(re.sub(r'[^\d.]', '', price_str))
+            except (ValueError, TypeError):
+                logging.warning(f"Could not parse price for variation '{variation}': {price_str}")
+                continue
+
+            tiers = []
+            if competitor_price_median > 0:
+                tiers.append({
+                    "tier": "Competitive",
+                    "price_usd": int(competitor_price_median * 0.95),
+                    "rationale": f"Attracts price-sensitive buyers, positioned 5% below market median (${competitor_price_median:.2f})."
+                })
+                tiers.append({
+                    "tier": "Market Average",
+                    "price_usd": int(competitor_price_median * 1.05),
+                    "rationale": f"Aligns with the general market, positioned 5% above market median (${competitor_price_median:.2f})."
+                })
+                tiers.append({
+                    "tier": "Premium",
+                    "price_usd": int(competitor_price_median * 1.20),
+                    "rationale": f"Targets the premium segment, positioned 20% above market median (${competitor_price_median:.2f})."
+                })
+            else: # Fallback if no competitor data
+                 tiers.append({
+                    "tier": "Competitive", "price_usd": int(price_value * 0.9),
+                    "rationale": "Fallback: No competitor data. Priced 10% below our base."
+                })
+                 tiers.append({
+                    "tier": "Market Average", "price_usd": int(price_value),
+                    "rationale": "Fallback: No competitor data. Aligns with our base price."
+                })
+                 tiers.append({
+                    "tier": "Premium", "price_usd": int(price_value * 1.15),
+                    "rationale": "Fallback: No competitor data. Priced 15% above our base for premium perception."
+                })
+
+            variation_key = variation.replace(" ", "_")
+            recommended_tiers[variation_key] = tiers
+
+        final_output = {
+            "analysis_summary": analysis_summary,
+            "recommended_tiers": recommended_tiers
+        }
+
+        try:
+            output_path = 'outputs/market_price_forecast.json'
+            save_result = version_controller.save_with_metadata(
+                base_path=output_path,
+                data=final_output,
+                actor='market_analyzer.py',
+                reason='Executed Step 7a: Market and Price Forecast analysis.'
+            )
+
+            if save_result:
+                logging.info(f"Market price forecast saved with metadata: {save_result['filepath']}")
+                return save_result
+            else:
+                logging.error(f"Failed to save market price forecast for: {output_path}")
+                return final_output
+
+        except Exception as e:
+            logging.error(f"[MarketAnalyzer] Failed to save output for Step 7a using VersionControl. Error: {e}", exc_info=True)
+            return final_output
