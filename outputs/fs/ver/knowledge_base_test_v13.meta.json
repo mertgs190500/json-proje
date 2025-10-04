@@ -1,8 +1,0 @@
-{
-  "timestamp": "2025-10-04T06:27:36.369927+00:00",
-  "version": 13,
-  "sha256": "405743e44a43c854ba8b266faf66d6557d5499746e11f15787b7ce01e1ecc30d",
-  "actor": "knowledge_manager.py",
-  "reason": "Add new insight: 'key1' from 'source_A'",
-  "source_file": "outputs/fs/ver/knowledge_base_test_v13.json"
-}

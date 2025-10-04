@@ -1,8 +1,0 @@
-{
-  "timestamp": "2025-10-04T06:26:10.754300+00:00",
-  "version": 9,
-  "sha256": "4d51e19f77a32458bffd3633286ec7757708086dec79d61aea2a435a2e4ddfe9",
-  "actor": "knowledge_manager.py",
-  "reason": "Add new insight: 'expired_key' from 'test_source'",
-  "source_file": "outputs/fs/ver/knowledge_base_test_v9.json"
-}

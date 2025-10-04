@@ -1,8 +1,0 @@
-{
-  "timestamp": "2025-10-04T06:26:10.750543+00:00",
-  "version": 8,
-  "sha256": "117a0ea7e83fce6084f7c3b9a99974a1fe794134ee9fc8a65ac9b05158acb146",
-  "actor": "knowledge_manager.py",
-  "reason": "Add new insight: 'multi_key' from 'source2'",
-  "source_file": "outputs/fs/ver/knowledge_base_test_v8.json"
-}

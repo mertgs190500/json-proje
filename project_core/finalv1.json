@@ -1798,42 +1798,109 @@
               }
             },
             "00": {
-              "n": "Yapılandırma Şema Doğrulaması",
-              "module": "config_validator.py",
-              "i": {
-                "config_file_path": "project_core/finalv1.json"
+              "c": {
+                "$ref": "#/_defs/def_0c53b4b6"
               },
-              "o": {
-                "context_key": "config_validation_status"
-              },
-              "requires": [],
-              "rs": {
-                "ruleset_name": "AlwaysRun"
+              "fl": {
+                "guard": {
+                  "advance_only_if": []
+                }
               },
               "g": {
-                  "on_v_f": "halt_and_report"
+                "$ref": "#/_defs/def_81cd9dc8"
+              },
+              "hitl": {
+                "gpt_tasks": [],
+                "user_tasks": []
+              },
+              "i": {
+                "$ref": "#/_defs/def_83385711"
+              },
+              "n": "Self-Check (arka planda)",
+              "next": [
+                "0a"
+              ],
+              "o": {
+                "$ref": "#/_defs/def_1b82d34a"
+              },
+              "precon": {
+                "$ref": "#/_defs/def_f5ad00a4"
+              },
+              "requires": [
+                "0"
+              ],
+              "rls": [
+                "validate each step has all required ruleset IDs",
+                "validate each step has required 'requires' deps (e.g., 0a for CSV-driven steps)",
+                "produce a detailed report of missing IDs/deps",
+                "self_check.status = PASS if no issues else FAIL",
+                "CSV: On upload, detect encoding (Office 2007/Turkish) and parse with defined dialect; never auto-infer types.",
+                "CSV: Header count must equal data field count (or +1 with removable leading numeric index for Top/Competitor files).",
+                "CSV: Preserve empty strings and literal 'NaN'; do NOT invent NaN; do NOT trim inside quotes.",
+                "CSV: Snapshot parsed table under /_runs/<run_id>/csv/<type> and compute sha256; block run if header/data mismatch.",
+                "ROW NORMALIZE (Top/Competitor): If data row has expected+1 columns and first cell is pure numeric index, drop that first cell to align with headers.",
+                "ROW NORMALIZE (Similar Keywords): If data row has expected+1 columns and last cell is empty, drop the trailing empty cell to align with headers.",
+                "PRE-RUN: Show /workflow_patches/steps/0 (Product Info) fields in FULL (no summary). Ask user: 'Değişiklik var mı? (EVET/HAYIR)'. If EVET, block run and request exact edits; if HAYIR, continue.",
+                "PRE-RUN: Capture product_info_snapshot under /_runs/<run_id>/product_info_snapshot with hash; require user_ack=true before step 1.",
+                "ENFORCE: Fail run if any /policy/guard/mandatory_fields/step_0 item is missing/empty OR if snapshot missing/mismatched.",
+                "ENFORCE: Steps must run sequentially by key order; skipping/fast-forward is forbidden unless 'requires' explicitly satisfied and user_ack present for gated steps.",
+                "ENFORCE: Any user-gated step with 'block_until_user_ack:true' cannot auto-advance and must be acknowledged by the user before proceeding."
+              ],
+              "rs": {
+                "$ref": "#/_defs/def_bc3ce38e"
+              },
+              "up_sig": {
+                "pol": "mark_stale_on_upstream_change"
+              },
+              "v": {
+                "$ref": "#/_defs/def_1c2e8943"
               }
             },
             "0a": {
-              "n": "Ortam Sağlık Kontrolleri",
-              "module": "system_health_checker.py",
-              "i": {
-                "required_dependency_versions": {
-                  "pandas": "2.0.0",
-                  "jsonschema": "4.0.0"
+              "c": {
+                "$ref": "#/_defs/def_44b66312"
+              },
+              "fl": {
+                "guard": {
+                  "advance_only_if": []
                 }
               },
+              "g": {
+                "$ref": "#/_defs/def_aa7a0937"
+              },
+              "hitl": {
+                "gpt_tasks": [],
+                "user_tasks": []
+              },
+              "i": [
+                "csv.input"
+              ],
+              "n": "Pre-Run Prep (Light, arka planda)",
+              "next": [
+                "1",
+                "3",
+                "6"
+              ],
               "o": {
-                "context_key": "system_health_status"
+                "$ref": "#/_defs/def_57d1c1c1"
+              },
+              "precon": {
+                "$ref": "#/_defs/def_0968fc36"
               },
               "requires": [
                 "00"
               ],
-              "rs": {
-                "ruleset_name": "AlwaysRun"
+              "rls": {
+                "$ref": "#/_defs/def_e8144b0e"
               },
-              "g": {
-                  "on_v_f": "halt_and_report"
+              "rs": {
+                "$ref": "#/_defs/def_a7c87169"
+              },
+              "up_sig": {
+                "pol": "mark_stale_on_upstream_change"
+              },
+              "v": {
+                "$ref": "#/_defs/def_c43f98ce"
               }
             },
             "1": {
