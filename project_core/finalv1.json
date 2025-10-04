@@ -2261,9 +2261,36 @@
               "rls": {
                 "$ref": "#/_defs/def_a23fd92b"
               },
-              "rs": {
-                "$ref": "#/_defs/def_039a760f"
-              },
+              "rs": [
+                {
+                  "$ref": "#/_defs/def_039a760f"
+                },
+                {
+                  "id": "RECORD_TYPE_SUGGESTION",
+                  "i": {
+                    "compliance_status": {
+                      "__REF__": "context.steps.14.outputs.compliance.status"
+                    },
+                    "seo_score": {
+                      "__REF__": "context.steps.14.outputs.compliance_report.seo_score"
+                    },
+                    "qa_warnings": {
+                      "__REF__": "context.steps.15.outputs.qa_warnings"
+                    }
+                  },
+                  "c": {
+                    "default_suggestion": "draft",
+                    "publish_thresholds": {
+                      "seo_score_gt": 80,
+                      "qa_warnings_max": 0
+                    }
+                  },
+                  "o": {
+                    "context_key": "listing.registration_suggestion"
+                  },
+                  "desc": "Suggests 'publish' or 'draft' based on compliance, SEO score, and QA warnings. If compliance status is not 'PASS', it always suggests 'draft'. Otherwise, it checks if SEO score and QA warnings meet the thresholds for a 'publish' suggestion."
+                }
+              ],
               "up_sig": {
                 "pol": "mark_stale_on_upstream_change"
               },
@@ -2674,9 +2701,13 @@
                 "gpt_tasks": [],
                 "user_tasks": []
               },
-              "i": {
-                "$ref": "#/_defs/def_b1e1d74d"
-              },
+              "i": [
+                "alura.csv[8]",
+                "alura.metrics",
+                "context.product_category",
+                "prior.signals",
+                "context.steps.1a.outputs"
+              ],
               "n": "Odak Anahtar Kelime + Havuz",
               "operations": {
                 "$ref": "#/_defs/def_d19d0c4d"
@@ -2744,9 +2775,14 @@
                 "11",
                 "12"
               ],
-              "i": {
-                "$ref": "#/_defs/def_f6b25403"
-              },
+              "i": [
+                "keywords.pool.ranked[]",
+                "keywords.focus[1..4].provisional",
+                "segment_coverage",
+                "product_attributes?",
+                "prior.signals?",
+                "context.steps.1a.outputs"
+              ],
               "n": "Taslak Paket (Title, Desc, Tags)",
               "o": {
                 "$ref": "#/_defs/def_ddd5b190"
@@ -2760,9 +2796,27 @@
               "rls": {
                 "$ref": "#/_defs/def_35e28156"
               },
-              "rs": {
-                "$ref": "#/_defs/def_53ea550d"
-              },
+              "rs": [
+                {
+                  "id": "VISUAL_CONSISTENCY_CHECK",
+                  "i": {
+                    "visual_attributes": {
+                      "__REF__": "context.steps.1a.outputs.visual_attribute_suggestions"
+                    }
+                  },
+                  "c": {
+                    "target_fields": [
+                      "title",
+                      "description",
+                      "tags"
+                    ]
+                  },
+                  "desc": "Ensure generated text (title, description, tags) is consistent with visual attributes."
+                },
+                {
+                  "$ref": "#/_defs/def_53ea550d"
+                }
+              ],
               "up_sig": {
                 "pol": "mark_stale_on_upstream_change"
               },
@@ -6648,9 +6702,24 @@
                 "requires": [
                   "3"
                 ],
-                "rs": {
-                  "$ref": "#/_defs/def_810d8992"
-                },
+                "rs": [
+                  {
+                    "id": "VISUAL_KEYWORD_BOOST",
+                    "i": {
+                      "visual_attributes": {
+                        "__REF__": "context.steps.1a.outputs.visual_attribute_suggestions"
+                      }
+                    },
+                    "c": {
+                      "boost_factor": 1.2,
+                      "matching_field": "term"
+                    },
+                    "desc": "Boost keywords that match visual attributes from image analysis."
+                  },
+                  {
+                    "$ref": "#/_defs/def_810d8992"
+                  }
+                ],
                 "scoring": {
                   "$ref": "#/_defs/def_aef8ed38"
                 },
@@ -11032,7 +11101,8 @@
         "i": [
           "product.info{}",
           "keywords.focus[1..4]",
-          "popular.segments.summary{}"
+          "popular.segments.summary{}",
+          "context.steps.5a.outputs"
         ],
         "o": [
           "attributes.selected{}",
@@ -11054,7 +11124,22 @@
           "__REF__": "/_run_order/steps/12a/outputs/0"
         },
         "n": "Nitelik Seçimi & Bonus Etiket Eşleme",
-        "auth_ref": {}
+        "auth_ref": {},
+        "rs": [
+            {
+                "id": "POPULARITY_DRIVEN_ATTRIBUTE_SELECTION",
+                "i": {
+                    "market_popularity_data": {
+                        "__REF__": "context.steps.5a.outputs.popular_products"
+                    }
+                },
+                "c": {
+                    "scoring_factor": 1.5,
+                    "min_occurrences": 3
+                },
+                "desc": "Prioritize attributes based on their popularity in the market analysis data."
+            }
+        ]
       },
       "00_profile.hydrate": {
         "purp": "Document that mirrors for canonical tokens resolve to Step 0 live refs.",

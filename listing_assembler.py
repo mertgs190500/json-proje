@@ -1,73 +1,73 @@
 import json
+import logging
 from version_control import VersionControl
 
 class ListingAssembler:
     def __init__(self, config=None):
         # The main config is passed during execution, this is for initialization
         self.config = config if config else {}
+        self.logger = logging.getLogger(__name__)
 
     def execute(self, inputs, context, knowledge_manager=None):
         """
-        Assembles the final product listing from various generated parts and
-        saves it as a versioned JSON file with metadata.
+        Assembles the final product listing, suggests a registration type,
+        and saves it as a versioned JSON file.
         """
-        # Load the primary configuration which contains versioning rules
+        self.logger.info("[ListingAssembler] Assembly process started.")
+
         try:
             with open('project_core/finalv1.json', 'r', encoding='utf-8') as f:
                 main_config = json.load(f)
         except (FileNotFoundError, json.JSONDecodeError) as e:
-            return {'status': 'FAIL', 'message': f'Could not load or parse project_core/finalv1.json: {e}', 'data': None}
+            self.logger.error(f"Could not load or parse project_core/finalv1.json: {e}")
+            return {'status': 'FAIL', 'message': f'Configuration error: {e}', 'data': None}
 
-        # This module's specific config is expected to be in the context or passed at init
-        # For this task, we assume the relevant 'exp' config is in the main_config
-        module_config = main_config
-
-        compliance_report = context.get('compliance_report', {})
-        if compliance_report.get('status') != 'PASS':
-            # This is a soft failure for now, just log it. A real scenario might halt.
-            print("Warning: Compliance check did not pass. Assembly will proceed but may be invalid.")
-
-        # Get the required columns from the configuration
-        export_columns = module_config.get('exp', {}).get('cols', [])
-
+        # --- Data Assembly ---
+        export_columns = main_config.get('exp', {}).get('cols', [])
         final_listing = {}
 
-        # Simplified mapping from context to the final listing structure
-        product_data = context.get('product_data', {}).get('data', {})
+        # Safely get data from inputs and context
+        product_data = inputs.get('product_data', {})
         final_listing['record_id'] = product_data.get('id', '')
         final_listing['op_type'] = 'CREATE'
         final_listing['is_deleted'] = 'false'
-        final_listing['product.title'] = context.get('final_title_output', {}).get('title_final', '')
-        final_listing['product.description'] = context.get('final_description_output', {}).get('description', '')
-        final_listing['product.tags'] = ",".join(context.get('final_tags_output', {}).get('tags', []))
+        final_listing['product.title'] = inputs.get('title_final', '')
+        final_listing['product.description'] = inputs.get('description_final', '')
+        final_listing['product.tags'] = ",".join(inputs.get('final_tags', []))
 
-        pricing_info = product_data.get('products', [{}])[0].get('pricing', {})
+        pricing_info = product_data.get('pricing', {})
         final_listing['pricing.price_value'] = pricing_info.get('price', '')
         final_listing['pricing.price_currency'] = pricing_info.get('currency', 'USD')
 
-        images = context.get('images', [])
+        images = inputs.get('images', [])
         for i in range(5):
             col_name = f'image_{i+1}'
-            if i < len(images):
-                final_listing[col_name] = images[i]
-            else:
-                final_listing[col_name] = ''
+            final_listing[col_name] = images[i] if i < len(images) else ''
 
-        # Ensure all columns from the export configuration are present
         for col in export_columns:
             if col not in final_listing:
                 final_listing[col] = ''
 
-        # --- Refactored File Writing Logic ---
+        # --- Automatic Registration Type Suggestion (Task 3.3) ---
+        self.logger.info("Generating registration type suggestion...")
+        compliance_status = inputs.get('compliance_status', 'FAIL')
+        seo_score = inputs.get('seo_score', 0)
+        qa_warnings_count = len(inputs.get('qa_warnings', []))
+
+        suggestion = 'draft' # Default suggestion
+        if compliance_status == 'PASS' and seo_score > 80 and qa_warnings_count == 0:
+            suggestion = 'publish'
+            self.logger.info("Suggestion: 'publish' (All checks passed, high SEO score).")
+        else:
+            self.logger.warning(f"Suggestion: 'draft'. Reasons: Compliance={compliance_status}, SEO Score={seo_score}, QA Warnings={qa_warnings_count}")
+
+        # --- Save Output ---
         try:
-            # Initialize VersionControl with the 'fs.ver' configuration
             versioning_config = main_config.get('fs', {}).get('ver', {})
             if not versioning_config:
-                return {'status': 'FAIL', 'message': "Versioning configuration ('fs.ver') not found in config.", 'data': None}
+                raise ValueError("Versioning configuration ('fs.ver') not found in config.")
 
             vc = VersionControl(versioning_config=versioning_config)
-
-            # Save the assembled listing using the version controller
             save_result = vc.save_with_metadata(
                 base_path='outputs/assembled_listing.json',
                 data=final_listing,
@@ -75,17 +75,15 @@ class ListingAssembler:
                 reason='Assembled final listing from all SEO components.'
             )
 
-            # The context for the next step should contain the path to the saved file
-            # and the data itself for in-memory operations.
             output_data = {
                 'assembled_listing': final_listing,
-                'filepath': save_result.get('filepath')
+                'filepath': save_result.get('filepath'),
+                'listing.registration_suggestion': suggestion
             }
 
-            return {'status': 'PASS', 'message': 'Listing assembled and saved successfully.', 'data': output_data}
+            self.logger.info("Listing assembled and saved successfully.")
+            return {'status': 'PASS', 'message': 'Listing assembled successfully.', 'data': output_data}
 
         except Exception as e:
-            # Log the full exception for debugging
-            import traceback
-            print(f"Error during file saving in ListingAssembler: {traceback.format_exc()}")
+            self.logger.error(f"Error during file saving in ListingAssembler: {e}", exc_info=True)
             return {'status': 'FAIL', 'message': f'An error occurred while saving the listing: {str(e)}', 'data': None}

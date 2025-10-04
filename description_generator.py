@@ -61,6 +61,7 @@ class DescriptionGenerator:
         market_data = inputs.get("market_analysis_results", {})
         final_title = inputs.get("title_final", "")
         product_data = inputs.get("product_data", {})
+        visual_attributes = inputs.get("visual_attribute_suggestions", [])
         if isinstance(product_data, list):
             product_data = product_data[0] if product_data else {}
 
@@ -69,9 +70,9 @@ class DescriptionGenerator:
             logging.error("Missing critical inputs: market_analysis_results, title_final, or product_data.")
             return {"description_final": "Error: Missing critical inputs.", "validation_report": {}}
 
-        description_parts = self._generate_description_sections(market_data, final_title, product_data)
+        description_parts = self._generate_description_sections(market_data, final_title, product_data, visual_attributes)
         final_description = self._assemble_description(description_parts)
-        validation_report = self._validate_description(final_description, market_data)
+        validation_report = self._validate_description(final_description, market_data, visual_attributes)
 
         logging.info("DescriptionGenerator execution finished.")
 
@@ -94,7 +95,7 @@ class DescriptionGenerator:
 
         return output_data
 
-    def _generate_description_sections(self, market_data, final_title, product_data):
+    def _generate_description_sections(self, market_data, final_title, product_data, visual_attributes):
         """
         Generates each section of the description (Hook, Features, etc.)
         by calling specialized helper methods.
@@ -103,7 +104,7 @@ class DescriptionGenerator:
         
         hook = self._create_hook(final_title, market_data.get('focus_keywords', []))
         features = self._create_features_list(product_data)
-        story = self._create_story_section()
+        story = self._create_story_section(visual_attributes)
         logistics = self._create_logistics_section()
         
         return {
@@ -140,14 +141,20 @@ class DescriptionGenerator:
         # Format as a bulleted list
         return "Product Details:\n" + "\n".join([f"• {item}" for item in features])
 
-    def _create_story_section(self):
-        """Creates a brief brand story aligned with the brand voice."""
+    def _create_story_section(self, visual_attributes=None):
+        """Creates a brief brand story aligned with the brand voice, incorporating visual attributes."""
         brand_voice = self.rules.get('brand_voice', {})
         tone = brand_voice.get('tone', 'elegant and professional')
-        keywords = brand_voice.get('keywords', ['quality', 'timeless'])
+        keywords = brand_voice.get('keywords', ['quality', 'timeless', 'elegant'])
         
         story = f"Our commitment to {keywords[1]} craftsmanship ensures every piece is a work of art. "
         story += f"We believe in creating {keywords[2]}, {tone.split(',')[0]} jewelry that you'll cherish for a lifetime."
+
+        if visual_attributes and len(visual_attributes) >= 2:
+            story += f" This piece features prominent {visual_attributes[0]} and {visual_attributes[1]} details, reflecting its unique character."
+        elif visual_attributes:
+            story += f" This piece features prominent {visual_attributes[0]} details, reflecting its unique character."
+
         return story
 
     def _create_logistics_section(self):
@@ -179,9 +186,11 @@ class DescriptionGenerator:
         )
         return full_description
 
-    def _validate_description(self, description, market_data):
+    def _validate_description(self, description, market_data, visual_attributes=None):
         """Validates the generated description against business rules from finalv1.json."""
         logging.info("Validating final description...")
+        if visual_attributes is None:
+            visual_attributes = []
         rules = self.rules.get('validation_rules', {})
         if not rules:
             logging.warning("No validation rules found in config.")
@@ -221,5 +230,14 @@ class DescriptionGenerator:
             if not forbidden_pass: report['overall_status'] = "FAIL"
         else:
             report['checks'].append({"name": "Forbidden Words Check", "status": "WARNING", "details": "Could not parse forbidden_terms_always."})
+
+        # 5. Visual Consistency Check
+        if visual_attributes:
+            missing_visuals = [attr for attr in visual_attributes if attr.lower() not in description.lower()]
+            visual_pass = not missing_visuals
+            report['checks'].append({"name": "Visual Consistency Check", "status": "PASS" if visual_pass else "WARN", "details": f"Missing visual attributes from description: {missing_visuals}" if missing_visuals else "Description is visually consistent."})
+            if not visual_pass and report['overall_status'] == "PASS":
+                report['overall_status'] = "WARNING"
+
 
         return report

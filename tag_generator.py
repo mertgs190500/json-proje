@@ -206,3 +206,73 @@ class TagGenerator:
                 logging.error(f"[TagGenerator] Failed to save tags using version control: {e}", exc_info=True)
 
         return output_data
+
+    def select_attributes_12a(self, inputs, context, knowledge_manager=None):
+        """
+        Executes Step 12a: Selects product attributes based on market popularity
+        to maximize their impact as 'bonus tags'.
+        """
+        logging.info("[TagGenerator] Starting Step 12a: Popularity-Driven Attribute Selection.")
+
+        # 1. Get Inputs
+        potential_attributes = inputs.get('product.info{}', {}).get('attributes', {})
+        if not potential_attributes:
+            logging.warning("No potential product attributes provided for selection.")
+            return {"attributes.selected": {}, "attribute_to_tag_saving": {}}
+
+        market_data = inputs.get('context.steps.5a.outputs', {})
+        popular_products = market_data.get('popular_products_top', [])
+        popular_keywords = market_data.get('popular_keywords_top', [])
+
+        # 2. Build Popularity Pool
+        popularity_pool = popular_keywords[:]
+        if popular_products:
+            for product in popular_products:
+                title = product.get('Title', '')
+                popularity_pool.extend(self._extract_terms(title))
+
+        popularity_counts = Counter(popularity_pool)
+        logging.info(f"Built popularity pool with {len(popularity_counts)} unique terms.")
+
+        # 3. Score and Select Attributes
+        selected_attributes = {}
+        attribute_scores = []
+
+        min_occurrences = 3
+        scoring_factor = 1.5
+
+        for attr_name, attr_value in potential_attributes.items():
+            if not isinstance(attr_value, str):
+                continue
+
+            score = 0
+            value_lower = attr_value.lower()
+
+            occurrences = popularity_counts.get(value_lower, 0)
+            if occurrences >= min_occurrences:
+                score = occurrences * scoring_factor
+
+            if score > 0:
+                attribute_scores.append((attr_name, attr_value, score))
+
+        attribute_scores.sort(key=lambda x: x[2], reverse=True)
+
+        for name, value, score in attribute_scores:
+            selected_attributes[name] = value
+            logging.info(f"Selected attribute '{name}: {value}' with score {score}.")
+
+        output_data = {"attributes.selected": selected_attributes, "attribute_to_tag_saving": {}}
+
+        if isinstance(knowledge_manager, VersionControl):
+            try:
+                knowledge_manager.save_with_metadata(
+                    base_path='outputs/selected_attributes.json',
+                    data=output_data,
+                    actor='tag_generator.py',
+                    reason='Executed Step 12a: Popularity-Driven Attribute Selection.'
+                )
+                logging.info("[TagGenerator] Successfully saved selected attributes with metadata.")
+            except Exception as e:
+                logging.error(f"[TagGenerator] Failed to save attributes using version control: {e}", exc_info=True)
+
+        return output_data

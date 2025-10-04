@@ -50,6 +50,7 @@ class TitleOptimizer:
 
         market_analysis = inputs.get("market_analysis", {})
         product_data = inputs.get("product_data", {})
+        visual_attributes = inputs.get("visual_attribute_suggestions", [])
 
         if not market_analysis.get("focus_keywords"):
             logging.error("Missing 'focus_keywords' in market_analysis input.")
@@ -66,7 +67,7 @@ class TitleOptimizer:
             return {"title_final": "Error: Could not generate titles", "title_variations": []}
 
         # 2. Validate and score each title
-        scored_titles = self._validate_and_score(all_titles, market_analysis, product_data)
+        scored_titles = self._validate_and_score(all_titles, market_analysis, product_data, visual_attributes)
 
         # 3. Select the best title
         best_title, selection_log = self._select_best_title(scored_titles)
@@ -133,12 +134,14 @@ class TitleOptimizer:
         logging.info(f"Generated {len(variations)} compliant title variations.")
         return variations
 
-    def _validate_and_score(self, titles, market_analysis, product_data):
+    def _validate_and_score(self, titles, market_analysis, product_data, visual_attributes=None):
         """
         Validates a list of titles against all business rules and assigns a score.
         A score of 0 means the title is invalid.
         """
         logging.info("Validating and scoring titles.")
+        if visual_attributes is None:
+            visual_attributes = []
         scored_titles = []
         primary_keyword = market_analysis.get("focus_keywords", [""])[0]
 
@@ -161,6 +164,11 @@ class TitleOptimizer:
                     score += 20  # Bonus for good SEO practice
                 else:
                     score -= 10 # Penalty
+
+                if self._check_visual_consistency(title, visual_attributes):
+                    score += 15 # Bonus for visual consistency
+                else:
+                    score -= 15 # Penalty for inconsistency
 
             scored_titles.append((title, score))
         return scored_titles
@@ -225,3 +233,13 @@ class TitleOptimizer:
             logging.warning(f"Validation FAIL (Mandatory): Missing karat or color in '{title}'")
             return False
         return True
+
+    def _check_visual_consistency(self, title, visual_attributes):
+        """Checks if at least one visual attribute is present in the title."""
+        if not visual_attributes:
+            return True # No attributes to check against, so it passes by default.
+
+        is_consistent = any(attr.lower() in title.lower() for attr in visual_attributes)
+        if not is_consistent:
+            logging.warning(f"Validation WARN (Visual Consistency): No visual attributes {visual_attributes} found in title '{title}'")
+        return is_consistent
