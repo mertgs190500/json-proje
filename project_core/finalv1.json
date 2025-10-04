@@ -18118,7 +18118,24 @@
           "user_tasks": []
         },
         "i": {
-          "$ref": "#/_defs/def_3e23fa2e"
+          "market_analysis": {
+            "$ref": "context.market_analysis"
+          },
+          "keyword_data": {
+            "$ref": "context.keyword_data"
+          },
+          "title_data": {
+            "$ref": "context.title_data"
+          },
+          "description_data": {
+            "$ref": "context.description_data"
+          },
+          "product_attributes": {
+            "$ref": "context.product_attributes"
+          },
+          "competitor_tags_data": {
+            "$ref": "context.competitor_data_clean"
+          }
         },
         "inputs_contract": {
           "$ref": "#/_defs/def_c8ca5491"
@@ -19414,6 +19431,9 @@
         "c": {
           "require_csv": true,
           "empty_intake": "RUN FAIL"
+        },
+        "o": {
+          "context_key": "competitor_data_clean"
         },
         "await_u": true,
         "require_user_confirm": true,

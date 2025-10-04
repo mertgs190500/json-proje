@@ -64,12 +64,27 @@ class TagGenerator:
         
         # From market analysis
         market_analysis = inputs.get('market_analysis', {})
-        candidate_pool.extend(market_analysis.get('popular_keywords_top', []) * 3) # Higher weight
-        candidate_pool.extend(market_analysis.get('competitor_signals', {}).get('main_themes', []))
-        candidate_pool.extend(market_analysis.get('market_snapshot', {}).get('keyword_gaps', []))
+        our_tag_pool = set() # Using a set for efficient lookup
+
+        popular_keywords = market_analysis.get('popular_keywords_top', [])
+        candidate_pool.extend(popular_keywords * 3) # Higher weight
+        our_tag_pool.update(popular_keywords)
+
+        main_themes = market_analysis.get('competitor_signals', {}).get('main_themes', [])
+        candidate_pool.extend(main_themes)
+        our_tag_pool.update(main_themes)
+
+        keyword_gaps = market_analysis.get('market_snapshot', {}).get('keyword_gaps', [])
+        candidate_pool.extend(keyword_gaps)
+        our_tag_pool.update(keyword_gaps)
+
 
         # From keyword processing
         keyword_data = inputs.get('keyword_data', {})
+        focus_keywords = keyword_data.get('focus_keywords', [])
+        supporting_keywords = keyword_data.get('supporting_keywords', [])
+        our_tag_pool.update(focus_keywords)
+        our_tag_pool.update(supporting_keywords)
         candidate_pool.extend(keyword_data.get('focus_keywords', []) * 5) # Highest weight
         candidate_pool.extend(keyword_data.get('supporting_keywords', []) * 2)
 
@@ -82,7 +97,23 @@ class TagGenerator:
         description_data = inputs.get('description_data', {})
         final_description = description_data.get('final_description', '')
         description_terms = self._extract_terms(final_description)
+        our_tag_pool.update(description_terms)
         candidate_pool.extend(list(description_terms))
+
+        # --- Gap Analysis ---
+        competitor_data = inputs.get('competitor_tags_data', {})
+        if competitor_data and 'data' in competitor_data:
+            competitor_tags = set()
+            for item in competitor_data['data']:
+                tags = item.get('Tags', '')
+                if isinstance(tags, str):
+                    # Assuming tags are comma-separated
+                    competitor_tags.update([tag.strip().lower() for tag in tags.split(',')])
+
+            opportunity_tags = competitor_tags - our_tag_pool
+            logging.info(f"Found {len(opportunity_tags)} opportunity tags (gaps).")
+            # Give opportunity tags a very high weight
+            candidate_pool.extend(list(opportunity_tags) * 5)
 
         if not candidate_pool:
             logging.warning("[TagGenerator] Candidate pool is empty. Cannot generate tags.")
